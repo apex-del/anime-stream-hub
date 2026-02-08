@@ -58,7 +58,7 @@ export default function AnimeCard({ anime, index = 0 }: AnimeCardProps) {
                 </>
               )}
             </div>
-            {anime.genres.length > 0 && (
+            {anime.genres?.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {anime.genres.slice(0, 2).map((genre) => (
                   <span
