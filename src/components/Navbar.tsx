@@ -1,20 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, X, Download } from "lucide-react";
+import { Search, X, Download, Heart, LogIn, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
-const navLinks = [
-  { label: "Home", path: "/" },
-  { label: "Browse", path: "/browse" },
-];
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -24,7 +21,6 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    setMobileOpen(false);
     setSearchOpen(false);
   }, [location.pathname]);
 
@@ -39,34 +35,20 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "glass border-b border-border" : "bg-transparent"
+      className={`sticky top-0 z-40 transition-all duration-300 ${
+        scrolled ? "glass border-b border-border" : "bg-background/80 backdrop-blur-sm"
       }`}
     >
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <Download className="h-6 w-6 text-primary transition-transform group-hover:scale-110" />
-          <span className="text-xl font-bold tracking-tight">
-            Anime<span className="text-primary">Stream</span>
-          </span>
-        </Link>
-
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === link.path
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+      <div className="flex h-14 items-center justify-between px-4 gap-4">
+        {/* Left: Sidebar trigger */}
+        <div className="flex items-center gap-3">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          <Link to="/" className="flex items-center gap-2 group md:hidden">
+            <Download className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
+            <span className="text-lg font-bold tracking-tight">
+              Anime<span className="text-primary">Stream</span>
+            </span>
+          </Link>
         </div>
 
         {/* Right section */}
@@ -99,43 +81,38 @@ export default function Navbar() {
             {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </button>
 
-          {/* Mobile menu toggle */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors md:hidden"
+          {/* Favorites shortcut */}
+          <Link
+            to="/favorites"
+            className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-secondary transition-colors hidden sm:flex"
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+            <Heart className="h-5 w-5" />
+          </Link>
+
+          {/* Auth */}
+          {user ? (
+            <Link
+              to="/settings"
+              className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 hover:bg-surface-hover transition-colors"
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                {user.email?.[0]?.toUpperCase() || "U"}
+              </div>
+              <span className="text-sm font-medium hidden sm:inline truncate max-w-[100px]">
+                {user.email?.split("@")[0]}
+              </span>
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign In</span>
+            </Link>
+          )}
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="md:hidden glass border-b border-border overflow-hidden"
-          >
-            <div className="container mx-auto px-4 py-3 flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === link.path
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   );
 }

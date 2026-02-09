@@ -9,6 +9,7 @@ import {
   ChevronUp,
   ArrowLeft,
   Download,
+  Heart,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
@@ -25,12 +26,16 @@ import {
   getBannerImage,
   getStatusColor,
 } from "@/lib/jikan";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AnimeDetails() {
   const { id } = useParams<{ id: string }>();
   const animeId = Number(id);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [episodePage, setEpisodePage] = useState(1);
+  const { user } = useAuth();
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const { data: animeData, isLoading } = useAnimeById(animeId);
   const { data: episodesData, isLoading: episodesLoading } =
@@ -120,9 +125,29 @@ export default function AnimeDetails() {
             transition={{ delay: 0.1 }}
             className="flex-1 pt-4 md:pt-8"
           >
-            <h1 className="text-2xl md:text-4xl font-extrabold leading-tight mb-3">
-              {getDisplayTitle(anime)}
-            </h1>
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <h1 className="text-2xl md:text-4xl font-extrabold leading-tight">
+                {getDisplayTitle(anime)}
+              </h1>
+              {user && (
+                <button
+                  onClick={() =>
+                    isFavorite(anime.mal_id)
+                      ? removeFavorite.mutate(anime.mal_id)
+                      : addFavorite.mutate(anime)
+                  }
+                  className={`shrink-0 p-2.5 rounded-lg border transition-all ${
+                    isFavorite(anime.mal_id)
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "bg-secondary border-border text-muted-foreground hover:text-primary hover:border-primary/30"
+                  }`}
+                >
+                  <Heart
+                    className={`h-5 w-5 ${isFavorite(anime.mal_id) ? "fill-primary" : ""}`}
+                  />
+                </button>
+              )}
+            </div>
 
             {anime.title_japanese && (
               <p className="text-sm text-muted-foreground mb-3">

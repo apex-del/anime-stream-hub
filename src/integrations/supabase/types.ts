@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          anime_id: number
+          anime_image: string | null
+          anime_score: number | null
+          anime_title: string
+          anime_type: string | null
+          anime_year: number | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          anime_id: number
+          anime_image?: string | null
+          anime_score?: number | null
+          anime_title: string
+          anime_type?: string | null
+          anime_year?: number | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          anime_id?: number
+          anime_image?: string | null
+          anime_score?: number | null
+          anime_title?: string
+          anime_type?: string | null
+          anime_year?: number | null
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watch_history: {
+        Row: {
+          anime_id: number
+          anime_image: string | null
+          anime_title: string
+          completed: boolean | null
+          episode_number: number | null
+          episode_title: string | null
+          id: string
+          progress: number | null
+          user_id: string
+          watched_at: string
+        }
+        Insert: {
+          anime_id: number
+          anime_image?: string | null
+          anime_title: string
+          completed?: boolean | null
+          episode_number?: number | null
+          episode_title?: string | null
+          id?: string
+          progress?: number | null
+          user_id: string
+          watched_at?: string
+        }
+        Update: {
+          anime_id?: number
+          anime_image?: string | null
+          anime_title?: string
+          completed?: boolean | null
+          episode_number?: number | null
+          episode_title?: string | null
+          id?: string
+          progress?: number | null
+          user_id?: string
+          watched_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
