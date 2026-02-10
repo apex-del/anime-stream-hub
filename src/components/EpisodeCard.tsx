@@ -1,5 +1,4 @@
-import { Download, Calendar, Flag } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Download, Calendar } from "lucide-react";
 import type { JikanEpisode } from "@/lib/jikan";
 
 interface EpisodeCardProps {
@@ -13,24 +12,13 @@ export default function EpisodeCard({
   animeTitle,
   animeMalId,
 }: EpisodeCardProps) {
-  const navigate = useNavigate();
-
   const handleDownload = () => {
-    const params = new URLSearchParams({
-      title: animeTitle,
-      episode: String(episode.mal_id),
-      animeId: String(animeMalId),
-    });
-    navigate(`/download?${params}`);
-  };
-
-  const handleReport = () => {
-    const params = new URLSearchParams({
-      title: animeTitle,
-      episode: String(episode.mal_id),
-      animeId: String(animeMalId),
-    });
-    navigate(`/feedback?type=broken_episode&animeTitle=${encodeURIComponent(animeTitle)}&episode=${episode.mal_id}`);
+    // Open a search for the episode download
+    const query = `${animeTitle} Episode ${episode.mal_id} download`;
+    window.open(
+      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+      "_blank"
+    );
   };
 
   return (
@@ -58,21 +46,12 @@ export default function EpisodeCard({
             </span>
           )}
           {episode.recap && (
-            <span className="rounded-full bg-accent/20 text-accent-foreground px-2 py-0.5 text-[10px] font-medium">
+            <span className="rounded-full bg-yellow-500/20 text-yellow-400 px-2 py-0.5 text-[10px] font-medium">
               Recap
             </span>
           )}
         </div>
       </div>
-
-      {/* Report Button */}
-      <button
-        onClick={handleReport}
-        title="Report broken episode"
-        className="shrink-0 flex items-center justify-center rounded-lg bg-destructive/10 border border-destructive/20 p-2 text-destructive transition-all hover:bg-destructive hover:text-destructive-foreground"
-      >
-        <Flag className="h-4 w-4" />
-      </button>
 
       {/* Download Button */}
       <button

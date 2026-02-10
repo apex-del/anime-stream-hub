@@ -11,10 +11,6 @@ import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
-import TopCharts from "./pages/TopCharts";
-import RandomAnime from "./pages/RandomAnime";
-import Download from "./pages/Download";
-import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -41,10 +37,6 @@ const App = () => (
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/top-charts" element={<TopCharts />} />
-            <Route path="/random" element={<RandomAnime />} />
-            <Route path="/download" element={<Download />} />
-            <Route path="/feedback" element={<Feedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
