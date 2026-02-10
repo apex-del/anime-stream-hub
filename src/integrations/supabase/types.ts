@@ -77,6 +77,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          anime_id: number | null
+          anime_title: string | null
+          created_at: string
+          episode_number: number | null
+          id: string
+          message: string | null
+          report_type: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          anime_id?: number | null
+          anime_title?: string | null
+          created_at?: string
+          episode_number?: number | null
+          id?: string
+          message?: string | null
+          report_type?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          anime_id?: number | null
+          anime_title?: string | null
+          created_at?: string
+          episode_number?: number | null
+          id?: string
+          message?: string | null
+          report_type?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       watch_history: {
         Row: {
           anime_id: number
