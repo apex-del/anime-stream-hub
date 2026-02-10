@@ -1,14 +1,13 @@
 import {
   Home,
+  Search,
   Heart,
   Clock,
   Settings,
   LogIn,
   Download,
-  Trophy,
+  TrendingUp,
   Compass,
-  Shuffle,
-  MessageSquare,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -30,14 +29,11 @@ import {
 const mainNav = [
   { title: "Home", url: "/", icon: Home },
   { title: "Browse", url: "/browse", icon: Compass },
-  { title: "Top Charts", url: "/top-charts", icon: Trophy },
-  { title: "Random", url: "/random", icon: Shuffle },
 ];
 
 const userNav = [
   { title: "Favorites", url: "/favorites", icon: Heart },
   { title: "History", url: "/history", icon: Clock },
-  { title: "Feedback", url: "/feedback", icon: MessageSquare },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
