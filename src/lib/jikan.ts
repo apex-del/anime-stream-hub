@@ -156,6 +156,11 @@ export async function getAnimeRecommendations(
   return res.json();
 }
 
+export async function getRandomAnime(): Promise<JikanResponse<JikanAnime>> {
+  const res = await rateLimitedFetch(`${BASE_URL}/random/anime`);
+  return res.json();
+}
+
 export async function getGenres(): Promise<
   JikanResponse<Array<{ mal_id: number; name: string; count: number }>>
 > {
