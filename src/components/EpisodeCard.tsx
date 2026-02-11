@@ -1,5 +1,7 @@
 import { Download, Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { JikanEpisode } from "@/lib/jikan";
+import ReportButton from "./ReportButton";
 
 interface EpisodeCardProps {
   episode: JikanEpisode;
@@ -12,13 +14,10 @@ export default function EpisodeCard({
   animeTitle,
   animeMalId,
 }: EpisodeCardProps) {
+  const navigate = useNavigate();
+
   const handleDownload = () => {
-    // Open a search for the episode download
-    const query = `${animeTitle} Episode ${episode.mal_id} download`;
-    window.open(
-      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-      "_blank"
-    );
+    navigate(`/download?title=${encodeURIComponent(animeTitle)}&ep=${episode.mal_id}&id=${animeMalId}`);
   };
 
   return (
@@ -46,12 +45,15 @@ export default function EpisodeCard({
             </span>
           )}
           {episode.recap && (
-            <span className="rounded-full bg-yellow-500/20 text-yellow-400 px-2 py-0.5 text-[10px] font-medium">
+            <span className="rounded-full bg-accent/20 text-accent-foreground px-2 py-0.5 text-[10px] font-medium">
               Recap
             </span>
           )}
         </div>
       </div>
+
+      {/* Report Button */}
+      <ReportButton animeId={animeMalId} animeTitle={animeTitle} episodeNumber={episode.mal_id} />
 
       {/* Download Button */}
       <button

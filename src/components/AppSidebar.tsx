@@ -8,6 +8,9 @@ import {
   Download,
   TrendingUp,
   Compass,
+  Shuffle,
+  Trophy,
+  MessageSquare,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -29,12 +32,18 @@ import {
 const mainNav = [
   { title: "Home", url: "/", icon: Home },
   { title: "Browse", url: "/browse", icon: Compass },
+  { title: "Top Charts", url: "/top-charts", icon: Trophy },
+  { title: "Random", url: "/random", icon: Shuffle },
 ];
 
 const userNav = [
   { title: "Favorites", url: "/favorites", icon: Heart },
   { title: "History", url: "/history", icon: Clock },
   { title: "Settings", url: "/settings", icon: Settings },
+];
+
+const extraNav = [
+  { title: "Contact", url: "/contact", icon: MessageSquare },
 ];
 
 export function AppSidebar() {
@@ -93,6 +102,29 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {userNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink to={item.url} end>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Extra */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Support</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {extraNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
