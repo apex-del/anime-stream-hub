@@ -11,6 +11,9 @@ import {
   Shuffle,
   Trophy,
   MessageSquare,
+  CalendarDays,
+  Info,
+  Bookmark,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -34,18 +37,20 @@ const mainNav = [
   { title: "Browse", url: "/browse", icon: Compass },
   { title: "Genres", url: "/genres", icon: Search },
   { title: "Top Charts", url: "/top-charts", icon: Trophy },
+  { title: "Schedule", url: "/schedule", icon: CalendarDays },
   { title: "Random", url: "/random", icon: Shuffle },
 ];
 
 const userNav = [
   { title: "Favorites", url: "/favorites", icon: Heart },
-  { title: "Watch List", url: "/watchlist", icon: TrendingUp },
+  { title: "Watch List", url: "/watchlist", icon: Bookmark },
   { title: "History", url: "/history", icon: Clock },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const extraNav = [
   { title: "Contact", url: "/contact", icon: MessageSquare },
+  { title: "About", url: "/about", icon: Info },
 ];
 
 export function AppSidebar() {

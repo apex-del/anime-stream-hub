@@ -17,6 +17,8 @@ import Download from "./pages/Download";
 import Contact from "./pages/Contact";
 import Genres from "./pages/Genres";
 import WatchList from "./pages/WatchList";
+import Schedule from "./pages/Schedule";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/genres" element={<Genres />} />
             <Route path="/watchlist" element={<WatchList />} />
+            <Route path="/schedule" element={<Schedule />} />
+            <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
