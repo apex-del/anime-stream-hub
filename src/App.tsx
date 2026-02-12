@@ -15,6 +15,8 @@ import TopCharts from "./pages/TopCharts";
 import RandomAnime from "./pages/RandomAnime";
 import Download from "./pages/Download";
 import Contact from "./pages/Contact";
+import Genres from "./pages/Genres";
+import WatchList from "./pages/WatchList";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/random" element={<RandomAnime />} />
             <Route path="/download" element={<Download />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/genres" element={<Genres />} />
+            <Route path="/watchlist" element={<WatchList />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

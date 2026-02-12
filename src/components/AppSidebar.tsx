@@ -32,12 +32,14 @@ import {
 const mainNav = [
   { title: "Home", url: "/", icon: Home },
   { title: "Browse", url: "/browse", icon: Compass },
+  { title: "Genres", url: "/genres", icon: Search },
   { title: "Top Charts", url: "/top-charts", icon: Trophy },
   { title: "Random", url: "/random", icon: Shuffle },
 ];
 
 const userNav = [
   { title: "Favorites", url: "/favorites", icon: Heart },
+  { title: "Watch List", url: "/watchlist", icon: TrendingUp },
   { title: "History", url: "/history", icon: Clock },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

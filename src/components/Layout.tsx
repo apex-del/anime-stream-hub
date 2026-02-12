@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import BottomNav from "./BottomNav";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,10 +15,11 @@ export default function Layout({ children }: LayoutProps) {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-16 md:pb-0">{children}</main>
           <Footer />
         </div>
       </div>
+      <BottomNav />
     </SidebarProvider>
   );
 }
