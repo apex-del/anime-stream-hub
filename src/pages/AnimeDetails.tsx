@@ -28,6 +28,10 @@ import {
 } from "@/lib/jikan";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
+import AnimeCharacters from "@/components/AnimeCharacters";
+import AnimeTrailer from "@/components/AnimeTrailer";
+import AnimeStats from "@/components/AnimeStats";
+import RelatedAnime from "@/components/RelatedAnime";
 
 export default function AnimeDetails() {
   const { id } = useParams<{ id: string }>();
@@ -328,6 +332,18 @@ export default function AnimeDetails() {
             </div>
           )}
         </motion.section>
+
+        {/* Trailer */}
+        <AnimeTrailer youtubeId={anime.trailer?.youtube_id} title={getDisplayTitle(anime)} />
+
+        {/* Characters */}
+        <AnimeCharacters animeId={animeId} />
+
+        {/* Statistics */}
+        <AnimeStats anime={anime} />
+
+        {/* Related */}
+        <RelatedAnime animeId={animeId} />
 
         {/* Recommendations */}
         {recommendations.length > 0 && (
