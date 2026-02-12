@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      comments: {
+        Row: {
+          anime_id: number
+          content: string
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anime_id: number
+          content: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anime_id?: number
+          content?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           anime_id: number
