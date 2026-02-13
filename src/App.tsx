@@ -19,7 +19,8 @@ import Genres from "./pages/Genres";
 import WatchList from "./pages/WatchList";
 import Schedule from "./pages/Schedule";
 import About from "./pages/About";
-import Seasonal from "./pages/Seasonal";
+import Studios from "./pages/Studios";
+import Upcoming from "./pages/Upcoming";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
@@ -55,7 +56,8 @@ const App = () => (
             <Route path="/watchlist" element={<WatchList />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/about" element={<About />} />
-            <Route path="/seasonal" element={<Seasonal />} />
+            <Route path="/studios" element={<Studios />} />
+            <Route path="/upcoming" element={<Upcoming />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
