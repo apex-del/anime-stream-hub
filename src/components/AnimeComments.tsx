@@ -274,7 +274,7 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
                       title={user ? "Like" : "Sign in to like"}
                     >
                       <ThumbsUp className="h-3.5 w-3.5" />
-                      {likes > 0 && <span>{likes}</span>}
+                      <span>{likes}</span>
                     </button>
                     <button
                       onClick={() => user && toggleReaction.mutate({ commentId: comment.id, type: "dislike" })}
@@ -287,7 +287,7 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
                       title={user ? "Dislike" : "Sign in to dislike"}
                     >
                       <ThumbsDown className="h-3.5 w-3.5" />
-                      {dislikes > 0 && <span>{dislikes}</span>}
+                      <span>{dislikes}</span>
                     </button>
                     <CommentReportButton commentId={comment.id} />
                   </div>
