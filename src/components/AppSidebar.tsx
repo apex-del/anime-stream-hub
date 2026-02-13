@@ -14,6 +14,8 @@ import {
   CalendarDays,
   Info,
   Bookmark,
+  Sparkles,
+  Award,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -37,6 +39,8 @@ const mainNav = [
   { title: "Browse", url: "/browse", icon: Compass },
   { title: "Genres", url: "/genres", icon: Search },
   { title: "Top Charts", url: "/top-charts", icon: Trophy },
+  { title: "Seasonal", url: "/seasonal", icon: Sparkles },
+  { title: "Leaderboard", url: "/leaderboard", icon: Award },
   { title: "Schedule", url: "/schedule", icon: CalendarDays },
   { title: "Random", url: "/random", icon: Shuffle },
 ];
