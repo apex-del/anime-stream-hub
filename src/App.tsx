@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
 import AnimeDetails from "./pages/AnimeDetails";
+import Watch from "./pages/Watch";
 import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
 import History from "./pages/History";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/anime/:id" element={<AnimeDetails />} />
+            <Route path="/watch/:id" element={<Watch />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/history" element={<History />} />
