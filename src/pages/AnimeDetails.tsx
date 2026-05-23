@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star,
   Calendar,
@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Download,
   Heart,
+  Play,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
@@ -40,6 +41,7 @@ export default function AnimeDetails() {
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [episodePage, setEpisodePage] = useState(1);
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const { data: animeData, isLoading } = useAnimeById(animeId);
