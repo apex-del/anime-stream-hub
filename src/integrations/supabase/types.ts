@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      anime_cache: {
+        Row: {
+          created_at: string
+          data: Json
+          mal_id: number
+          source: string
+          synced_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          mal_id: number
+          source?: string
+          synced_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          mal_id?: number
+          source?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      anime_episodes_cache: {
+        Row: {
+          anime_id: number
+          data: Json
+          id: string
+          page: number
+          synced_at: string
+        }
+        Insert: {
+          anime_id: number
+          data: Json
+          id?: string
+          page?: number
+          synced_at?: string
+        }
+        Update: {
+          anime_id?: number
+          data?: Json
+          id?: string
+          page?: number
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      anime_lists_cache: {
+        Row: {
+          cache_key: string
+          data: Json
+          expires_at: string | null
+          synced_at: string
+        }
+        Insert: {
+          cache_key: string
+          data: Json
+          expires_at?: string | null
+          synced_at?: string
+        }
+        Update: {
+          cache_key?: string
+          data?: Json
+          expires_at?: string | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
       comment_reactions: {
         Row: {
           comment_id: string
@@ -115,6 +184,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -123,6 +193,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -131,6 +202,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
