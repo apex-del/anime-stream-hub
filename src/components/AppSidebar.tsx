@@ -17,6 +17,7 @@ import {
   Sparkles,
   Award,
   Building2,
+  User,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -48,6 +49,7 @@ const mainNav = [
 ];
 
 const userNav = [
+  { title: "Profile", url: "/profile", icon: User },
   { title: "Favorites", url: "/favorites", icon: Heart },
   { title: "Watch List", url: "/watchlist", icon: Bookmark },
   { title: "History", url: "/history", icon: Clock },

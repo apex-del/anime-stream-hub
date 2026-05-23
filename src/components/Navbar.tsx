@@ -1,27 +1,40 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, X, Download, Heart, LogIn, User } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, X, Download, Heart, LogIn } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: profile } = useProfile();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+      // Hide when scrolling down past 80px, show on scroll up
+      if (y > 80 && y > lastY.current) setHidden(true);
+      else setHidden(false);
+      lastY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
     setSearchOpen(false);
+    setHidden(false);
   }, [location.pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -33,27 +46,27 @@ export default function Navbar() {
     }
   };
 
+  const initial = (profile?.display_name?.[0] ?? user?.email?.[0] ?? "U").toUpperCase();
+
   return (
     <nav
-      className={`sticky top-0 z-40 transition-all duration-300 ${
-        scrolled ? "glass border-b border-border" : "bg-background/80 backdrop-blur-sm"
-      }`}
+      className={`sticky top-0 z-40 transition-transform duration-300 ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      } ${scrolled ? "glass border-b border-border" : "bg-background/80 backdrop-blur-sm"}`}
     >
-      <div className="flex h-14 items-center px-4 gap-2 min-w-0">
-        {/* Left: Sidebar trigger + brand */}
-        <div className="flex items-center gap-3 shrink-0">
+      <div className="flex h-14 items-center px-3 sm:px-4 gap-2 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
           {!searchOpen && (
             <Link to="/" className="flex items-center gap-2 group md:hidden">
               <Download className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
-              <span className="text-lg font-bold tracking-tight">
+              <span className="text-base font-bold tracking-tight">
                 Anime<span className="text-primary">Stream</span>
               </span>
             </Link>
           )}
         </div>
 
-        {/* Search bar - expands into middle */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div
@@ -76,14 +89,13 @@ export default function Navbar() {
           )}
         </AnimatePresence>
 
-        {/* Spacer when search closed */}
         {!searchOpen && <div className="flex-1" />}
 
-        {/* Right actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <button
             onClick={() => setSearchOpen(!searchOpen)}
             className="shrink-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            aria-label={searchOpen ? "Close search" : "Open search"}
           >
             {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </button>
@@ -93,26 +105,31 @@ export default function Navbar() {
               <Link
                 to="/favorites"
                 className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-secondary transition-colors hidden sm:flex"
+                aria-label="Favorites"
               >
                 <Heart className="h-5 w-5" />
               </Link>
 
               {user ? (
                 <Link
-                  to="/settings"
-                  className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 hover:bg-surface-hover transition-colors"
+                  to="/profile"
+                  className="flex items-center gap-2 rounded-full sm:rounded-lg sm:bg-secondary sm:px-2 sm:py-1 hover:bg-surface-hover transition-colors"
+                  aria-label="Profile"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                    {user.email?.[0]?.toUpperCase() || "U"}
-                  </div>
-                  <span className="text-sm font-medium hidden sm:inline truncate max-w-[100px]">
-                    {user.email?.split("@")[0]}
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url ?? undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                      {initial}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium hidden md:inline truncate max-w-[100px]">
+                    {profile?.display_name ?? user.email?.split("@")[0]}
                   </span>
                 </Link>
               ) : (
                 <Link
                   to="/auth"
-                  className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   <LogIn className="h-4 w-4" />
                   <span className="hidden sm:inline">Sign In</span>

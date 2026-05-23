@@ -23,6 +23,7 @@ import About from "./pages/About";
 import Studios from "./pages/Studios";
 import Upcoming from "./pages/Upcoming";
 import Leaderboard from "./pages/Leaderboard";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -61,6 +62,8 @@ const App = () => (
             <Route path="/studios" element={<Studios />} />
             <Route path="/upcoming" element={<Upcoming />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
