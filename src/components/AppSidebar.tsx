@@ -161,7 +161,10 @@ export function AppSidebar() {
       {/* Footer */}
       <SidebarFooter className="p-3">
         {user ? (
-          <div className={`flex items-center gap-3 rounded-lg bg-sidebar-accent p-2.5 ${collapsed ? "justify-center" : ""}`}>
+          <NavLink
+            to="/profile"
+            className={`flex items-center gap-3 rounded-lg bg-sidebar-accent p-2.5 hover:bg-sidebar-accent/80 transition-colors ${collapsed ? "justify-center" : ""}`}
+          >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-sm font-bold">
               {user.email?.[0]?.toUpperCase() || "U"}
             </div>
@@ -170,9 +173,10 @@ export function AppSidebar() {
                 <p className="text-xs font-medium text-sidebar-foreground truncate">
                   {user.email}
                 </p>
+                <p className="text-[10px] text-muted-foreground">View profile</p>
               </div>
             )}
-          </div>
+          </NavLink>
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
