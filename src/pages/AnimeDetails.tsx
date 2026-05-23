@@ -267,6 +267,20 @@ export default function AnimeDetails() {
                 </button>
               </div>
             )}
+
+            {/* Watch CTA */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(`/watch/${anime.mal_id}?ep=1`)}
+              className="group relative w-full md:w-auto inline-flex items-center justify-center gap-3 rounded-xl px-8 py-4 font-bold text-base text-primary-foreground shadow-lg shadow-primary/30 transition-all overflow-hidden bg-gradient-to-r from-primary via-primary to-primary/80 hover:shadow-xl hover:shadow-primary/50"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <span className="relative flex items-center justify-center h-9 w-9 rounded-full bg-white/20 backdrop-blur">
+                <Play className="h-5 w-5 fill-current ml-0.5" />
+              </span>
+              <span className="relative">Watch Now</span>
+            </motion.button>
           </motion.div>
         </div>
 
