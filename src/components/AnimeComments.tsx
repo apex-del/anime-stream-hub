@@ -13,6 +13,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AnimeCommentsProps {
   animeId: number;
@@ -245,13 +256,33 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button
-                onClick={() => deleteComment.mutate(comment.id)}
-                className="p-1.5 rounded text-muted-foreground hover:text-destructive"
-                title="Delete"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    className="p-1.5 rounded text-muted-foreground hover:text-destructive"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove your comment{replies.length > 0 ? ` and its ${replies.length} repl${replies.length === 1 ? "y" : "ies"}` : ""}. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteComment.mutate(comment.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </div>
