@@ -43,11 +43,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { display_name: displayName },
       },
     });
+    if (!error) {
+      supabase.functions.invoke("send-email", {
+        body: { kind: "welcome", to: email, name: displayName || email.split("@")[0] },
+      }).catch(() => {});
+    }
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      supabase.functions.invoke("send-email", {
+        body: {
+          kind: "login_alert",
+          to: email,
+          name: email.split("@")[0],
+          meta: { when: new Date().toUTCString() },
+        },
+      }).catch(() => {});
+    }
     return { error };
   };
 

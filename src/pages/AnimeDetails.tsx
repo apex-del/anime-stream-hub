@@ -323,7 +323,8 @@ export default function AnimeDetails() {
             </div>
           ) : episodes.length > 0 ? (
             <>
-              <div className="space-y-2">
+              {/* Scrollable episode list */}
+              <div className="max-h-[480px] overflow-y-auto rounded-xl border border-border bg-card/40 p-2 sm:p-3 space-y-2">
                 {episodes.map((ep) => (
                   <EpisodeCard
                     key={ep.mal_id}

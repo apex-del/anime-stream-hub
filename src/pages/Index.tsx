@@ -30,33 +30,29 @@ export default function Home() {
           isLoading={airingLoading}
         />
 
-        <AnimeRow
+        {/* This Season — grid */}
+        <LeaderboardGrid
           title="📺 This Season"
           animeList={seasonData?.data || []}
           isLoading={seasonLoading}
         />
 
-        <AnimeRow
+        {/* Most Popular — grid */}
+        <LeaderboardGrid
           title="⭐ Most Popular"
           animeList={popularData?.data || []}
           isLoading={popularLoading}
         />
 
-        <AnimeRow
+        {/* Top Rated — grid */}
+        <LeaderboardGrid
           title="🏆 Top Rated"
           animeList={topData?.data || []}
           isLoading={topLoading}
         />
 
-        {/* Leaderboard Grids */}
         <LeaderboardGrid
-          title="Popular Leaderboard"
-          animeList={popularData?.data || []}
-          isLoading={popularLoading}
-        />
-
-        <LeaderboardGrid
-          title="Fan Favorites"
+          title="💖 Fan Favorites"
           animeList={favoriteData?.data || []}
           isLoading={favoriteLoading}
         />
