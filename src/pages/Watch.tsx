@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List } from "lucide-react";
+import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, ExternalLink, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
@@ -13,6 +13,7 @@ import {
 import { getDisplayTitle } from "@/lib/jikan";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useAuth } from "@/hooks/useAuth";
+import { useEpisodeStreams, useEpisodeDownloads } from "@/hooks/useStreams";
 
 type AudioType = "sub" | "dub";
 
@@ -29,22 +30,29 @@ function slugify(title: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function buildEmbed(server: number, slug: string, ep: number, audio: AudioType) {
-  const dubSuffix = audio === "dub" ? "-dub" : "";
-  switch (server) {
-    case 1:
-      return `https://2anime.xyz/embed/${slug}${dubSuffix}-episode-${ep}`;
-    case 2:
-      return `https://anitaku.bz/embed.php?id=${slug}${dubSuffix}-episode-${ep}`;
-    case 3:
-      return `https://www.youtube.com/embed/?listType=search&list=${encodeURIComponent(
-        `${slug.replace(/-/g, " ")} episode ${ep} ${audio === "dub" ? "english dub" : "english sub"}`
-      )}`;
-    case 4:
-    default:
-      return DEMO_VIDEO;
-  }
+// Group downloads by service for tab switching
+function groupBy<T, K extends string>(arr: T[], key: (x: T) => K): Record<K, T[]> {
+  return arr.reduce((acc, item) => {
+    const k = key(item);
+    (acc[k] ||= []).push(item);
+    return acc;
+  }, {} as Record<K, T[]>);
 }
+
+const SERVICE_LABELS: Record<string, string> = {
+  upfiles: "UpFiles",
+  filepress: "FilePress",
+  gofile: "GoFile",
+  mixdrop: "MixDrop",
+  telegram: "Telegram",
+  tg_cc: "TG Backup",
+  pixeldrain: "PixelDrain",
+  ddownload: "DDownload",
+  abyss: "Abyss",
+  turboviplay: "TurboVid",
+  anonfiles: "AnonFiles",
+};
+const label = (s: string) => SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
@@ -57,25 +65,58 @@ export default function Watch() {
   const initialEp = Number(searchParams.get("ep")) || 1;
   const [currentEp, setCurrentEp] = useState(initialEp);
   const [audio, setAudio] = useState<AudioType>("sub");
-  const [server, setServer] = useState<number>(1);
+  const [activeServerId, setActiveServerId] = useState<string | null>(null);
+  const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
   const [epPage, setEpPage] = useState(1);
 
   const { data: animeData, isLoading } = useAnimeById(animeId);
   const { data: episodesData } = useAnimeEpisodes(animeId, 1);
   const { data: recsData } = useAnimeRecommendations(animeId);
+  const { data: streams = [], isLoading: streamsLoading } = useEpisodeStreams(animeId, currentEp);
+  const { data: downloads = [], isLoading: downloadsLoading } = useEpisodeDownloads(animeId, currentEp);
 
   const anime = animeData?.data;
   const episodes = episodesData?.data || [];
   const totalEps = anime?.episodes || episodes.length || 12;
   const recommendations = recsData?.data?.slice(0, 12) || [];
-
   const slug = useMemo(() => (anime ? slugify(anime.title) : ""), [anime]);
-  const embedUrl = useMemo(
-    () => (slug ? buildEmbed(server, slug, currentEp, audio) : DEMO_VIDEO),
-    [slug, server, currentEp, audio]
+
+  // Filter streams by selected audio
+  const filteredStreams = useMemo(
+    () => streams.filter((s) => s.category === audio),
+    [streams, audio]
   );
 
-  // Auto-jump pagination to the page containing currentEp
+  // Auto-select first server when streams change
+  useEffect(() => {
+    if (filteredStreams.length > 0) {
+      if (!filteredStreams.find((s) => s.id === activeServerId)) {
+        setActiveServerId(filteredStreams[0].id);
+      }
+    } else {
+      setActiveServerId(null);
+    }
+  }, [filteredStreams, activeServerId]);
+
+  // Group downloads by service & set default tab
+  const downloadsByService = useMemo(() => groupBy(downloads, (d) => d.service_name), [downloads]);
+  const downloadServices = Object.keys(downloadsByService);
+  useEffect(() => {
+    if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
+      setActiveDownloadTab(downloadServices[0]);
+    }
+  }, [downloadServices, activeDownloadTab]);
+
+  const activeStream = filteredStreams.find((s) => s.id === activeServerId);
+  // Fallback YouTube search if no real stream
+  const fallbackEmbed = useMemo(() => {
+    if (!slug) return DEMO_VIDEO;
+    return `https://www.youtube.com/embed/?listType=search&list=${encodeURIComponent(
+      `${slug.replace(/-/g, " ")} episode ${currentEp} ${audio === "dub" ? "english dub" : "english sub"}`
+    )}`;
+  }, [slug, currentEp, audio]);
+  const embedUrl = activeStream?.embed_url || activeStream?.service_url || fallbackEmbed;
+
   useEffect(() => {
     const page = Math.ceil(currentEp / EPISODES_PER_PAGE);
     setEpPage(page || 1);
@@ -103,6 +144,12 @@ export default function Watch() {
     [pageStart, pageEnd]
   );
 
+  // Available audio categories for this episode
+  const availableAudio = useMemo(() => {
+    const set = new Set(streams.map((s) => s.category));
+    return ["sub", "dub"].filter((a) => set.has(a as AudioType)) as AudioType[];
+  }, [streams]);
+
   if (isLoading || !anime) {
     return (
       <Layout>
@@ -113,9 +160,10 @@ export default function Watch() {
     );
   }
 
+  const activeDownloads = activeDownloadTab ? downloadsByService[activeDownloadTab] || [] : [];
+
   return (
     <Layout>
-      {/* Full-bleed player */}
       <div className="pt-14">
         <motion.div
           initial={{ opacity: 0 }}
@@ -135,13 +183,12 @@ export default function Watch() {
           </div>
         </motion.div>
 
-        {/* Fixed title bar UNDER iframe */}
+        {/* Sticky title bar */}
         <div className="sticky top-14 z-30 bg-background/95 backdrop-blur border-b border-border">
           <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 min-w-0">
             <Link
               to={`/anime/${animeId}`}
               className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-secondary hover:bg-surface-hover px-2.5 py-1.5 text-xs sm:text-sm transition-colors"
-              aria-label="Back to info"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Back</span>
@@ -153,6 +200,7 @@ export default function Watch() {
               <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 Episode {currentEp}
                 {anime.episodes ? ` of ${anime.episodes}` : ""}
+                {activeStream && ` · ${label(activeStream.service_name)} · ${activeStream.quality}`}
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
@@ -160,7 +208,6 @@ export default function Watch() {
                 onClick={() => currentEp > 1 && updateEp(currentEp - 1)}
                 disabled={currentEp <= 1}
                 className="p-1.5 rounded-lg bg-secondary hover:bg-surface-hover disabled:opacity-40 transition-colors"
-                aria-label="Previous episode"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -168,7 +215,6 @@ export default function Watch() {
                 onClick={() => currentEp < totalEps && updateEp(currentEp + 1)}
                 disabled={currentEp >= totalEps}
                 className="p-1.5 rounded-lg bg-secondary hover:bg-surface-hover disabled:opacity-40 transition-colors"
-                aria-label="Next episode"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -178,60 +224,131 @@ export default function Watch() {
       </div>
 
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6 sm:space-y-8 max-w-6xl">
-        {/* Sub/Dub + Servers — responsive, no overflow */}
+        {/* Sub/Dub + Real Server List */}
         <div className="rounded-xl bg-card border border-border p-3 sm:p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <span className="text-xs sm:text-sm font-semibold text-muted-foreground shrink-0">
               Audio
             </span>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              {(["sub", "dub"] as const).map((a) => (
-                <button
-                  key={a}
-                  onClick={() => setAudio(a)}
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium uppercase transition-all ${
-                    audio === a
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {a}
-                </button>
-              ))}
+              {(["sub", "dub"] as const).map((a) => {
+                const available = availableAudio.length === 0 || availableAudio.includes(a);
+                return (
+                  <button
+                    key={a}
+                    onClick={() => setAudio(a)}
+                    disabled={!available && availableAudio.length > 0}
+                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium uppercase transition-all ${
+                      audio === a
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    } disabled:opacity-40`}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-            <span className="text-xs sm:text-sm font-semibold text-muted-foreground shrink-0 inline-flex items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
+            <span className="text-xs sm:text-sm font-semibold text-muted-foreground shrink-0 inline-flex items-center gap-1.5 pt-1">
               <Server className="h-3.5 w-3.5" /> Servers
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full sm:w-auto">
-              {[
-                { id: 1, label: "Server 1" },
-                { id: 2, label: "Server 2" },
-                { id: 3, label: "Server 3" },
-                { id: 4, label: "Demo" },
-              ].map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setServer(s.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border whitespace-nowrap ${
-                    server === s.id
-                      ? "bg-primary/15 border-primary/40 text-primary"
-                      : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2 min-w-0">
+              {streamsLoading ? (
+                <div className="text-xs text-muted-foreground">Loading servers…</div>
+              ) : filteredStreams.length > 0 ? (
+                filteredStreams.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveServerId(s.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border whitespace-nowrap ${
+                      activeServerId === s.id
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {label(s.service_name)} · {s.quality}
+                  </button>
+                ))
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  No {audio.toUpperCase()} servers yet — showing fallback search.
+                </div>
+              )}
             </div>
           </div>
-          <p className="text-[11px] sm:text-xs text-muted-foreground">
-            If a server doesn't load, try another or use the Demo player.
-          </p>
         </div>
 
-        {/* Episode List — scrollable + pagination */}
+        {/* Downloads */}
+        <section className="rounded-xl bg-card border border-border p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+              <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
+            </h2>
+            {downloads.length > 0 && (
+              <span className="text-[11px] sm:text-xs text-muted-foreground">
+                {downloads.length} link{downloads.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+
+          {downloadsLoading ? (
+            <div className="text-xs text-muted-foreground">Loading download links…</div>
+          ) : downloadServices.length === 0 ? (
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              <AlertCircle className="h-3.5 w-3.5" /> No download links available yet for this episode.
+            </div>
+          ) : (
+            <>
+              {/* Service tabs */}
+              <div className="flex flex-wrap gap-2 mb-3 border-b border-border pb-3">
+                {downloadServices.map((svc) => (
+                  <button
+                    key={svc}
+                    onClick={() => setActiveDownloadTab(svc)}
+                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border ${
+                      activeDownloadTab === svc
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {label(svc)}
+                    <span className="ml-1.5 opacity-70">({downloadsByService[svc].length})</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Links for active service */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {activeDownloads.map((d) => (
+                  <a
+                    key={d.id}
+                    href={d.service_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 hover:bg-surface-hover hover:border-primary/40 transition-all group"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold truncate">{label(d.service_name)}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}
+                      </div>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
+                  </a>
+                ))}
+              </div>
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Links open on third-party hosts. We don't host or control these files.
+              </p>
+            </>
+          )}
+        </section>
+
+        {/* Episode List */}
         <section>
           <div className="flex items-center justify-between mb-3 gap-2">
             <h2 className="text-base sm:text-lg md:text-xl font-bold flex items-center gap-2">
@@ -242,7 +359,6 @@ export default function Watch() {
             </span>
           </div>
 
-          {/* Pagination chips */}
           {totalPages > 1 && (
             <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
@@ -317,7 +433,7 @@ export default function Watch() {
           )}
         </section>
 
-        {/* Mini Anime Info */}
+        {/* Mini info */}
         <section className="rounded-xl bg-card border border-border p-3 sm:p-4 md:p-5">
           <div className="flex gap-3 sm:gap-4">
             <img
@@ -354,10 +470,8 @@ export default function Watch() {
           </div>
         </section>
 
-        {/* Comments */}
         <AnimeComments animeId={animeId} />
 
-        {/* Recommendations */}
         {recommendations.length > 0 && (
           <section>
             <h2 className="text-base sm:text-lg md:text-xl font-bold mb-3 flex items-center gap-2">
