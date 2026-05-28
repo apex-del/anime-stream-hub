@@ -34,6 +34,7 @@ import AnimeTrailer from "@/components/AnimeTrailer";
 import AnimeStats from "@/components/AnimeStats";
 import RelatedAnime from "@/components/RelatedAnime";
 import AnimeComments from "@/components/AnimeComments";
+import AnimeStatusFlag from "@/components/AnimeStatusFlag";
 
 export default function AnimeDetails() {
   const { id } = useParams<{ id: string }>();
