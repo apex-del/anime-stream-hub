@@ -188,10 +188,19 @@ export default function Watch() {
           animate={{ opacity: 1 }}
           className="w-full bg-black"
         >
-          <div className="aspect-video w-full max-h-[80vh] mx-auto bg-black">
+          <div className="aspect-video w-full max-h-[80vh] mx-auto bg-black relative">
+            {iframeLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 gap-3">
+                <div className="h-10 w-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                <p className="text-xs text-muted-foreground">
+                  Loading {activeStream ? label(activeStream.service_name) : "player"}…
+                </p>
+              </div>
+            )}
             <iframe
               key={embedUrl}
               src={embedUrl}
+              onLoad={() => setIframeLoading(false)}
               className="w-full h-full block"
               allowFullScreen
               allow="autoplay; encrypted-media; picture-in-picture"
