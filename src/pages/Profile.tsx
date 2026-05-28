@@ -19,6 +19,7 @@ export default function Profile() {
   const { data: profile, isLoading } = useProfile(ownerId);
   const { data: stats } = useUserStats(ownerId);
   const { data: activity } = useRecentActivity(ownerId);
+  const { data: watchedList = [] } = useAnimeStatusList(ownerId, "watched");
   const updateProfile = useUpdateProfile();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
