@@ -5,6 +5,7 @@ import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calenda
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
+import AnimeCharacters from "@/components/AnimeCharacters";
 import {
   useAnimeById,
   useAnimeEpisodes,
