@@ -83,6 +83,39 @@ export type Database = {
         }
         Relationships: []
       }
+      anime_status: {
+        Row: {
+          anime_id: number
+          anime_image: string | null
+          anime_title: string
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anime_id: number
+          anime_image?: string | null
+          anime_title: string
+          created_at?: string
+          id?: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anime_id?: number
+          anime_image?: string | null
+          anime_title?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comment_reactions: {
         Row: {
           comment_id: string
