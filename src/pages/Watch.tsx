@@ -497,6 +497,9 @@ export default function Watch() {
           </div>
         </section>
 
+        {/* Characters & VAs (paginated) */}
+        <AnimeCharacters animeId={animeId} compact />
+
         <AnimeComments animeId={animeId} />
 
         {recommendations.length > 0 && (
