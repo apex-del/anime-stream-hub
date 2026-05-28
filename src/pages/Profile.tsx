@@ -154,7 +154,7 @@ export default function Profile() {
           <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
             {[
               { icon: Heart, label: "Favorites", value: stats?.favorites ?? 0 },
-              { icon: Clock, label: "Watched", value: stats?.history ?? 0 },
+              { icon: Check, label: "Watched", value: stats?.watched ?? 0 },
               { icon: MessageSquare, label: "Comments", value: stats?.comments ?? 0 },
             ].map((s) => (
               <div key={s.label} className="rounded-xl bg-secondary/50 border border-border p-3 sm:p-4 text-center">
