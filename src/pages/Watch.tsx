@@ -5,6 +5,7 @@ import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calenda
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
+import AnimeCharacters from "@/components/AnimeCharacters";
 import {
   useAnimeById,
   useAnimeEpisodes,
@@ -87,19 +88,29 @@ export default function Watch() {
     [streams, audio]
   );
 
-  // Auto-select first server when streams change
+  // Auto-select preferred server (turbovid first) when streams change
   useEffect(() => {
     if (filteredStreams.length > 0) {
       if (!filteredStreams.find((s) => s.id === activeServerId)) {
-        setActiveServerId(filteredStreams[0].id);
+        const preferred =
+          filteredStreams.find((s) => s.service_name === "turboviplay") ||
+          filteredStreams.find((s) => /turbo|vid/i.test(s.service_name)) ||
+          filteredStreams[0];
+        setActiveServerId(preferred.id);
       }
     } else {
       setActiveServerId(null);
     }
   }, [filteredStreams, activeServerId]);
 
+  // Only true downloads — exclude pure embed providers (abyss / turboviplay)
+  const realDownloads = useMemo(
+    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
+    [downloads]
+  );
+
   // Group downloads by service & set default tab
-  const downloadsByService = useMemo(() => groupBy(downloads, (d) => d.service_name), [downloads]);
+  const downloadsByService = useMemo(() => groupBy(realDownloads, (d) => d.service_name), [realDownloads]);
   const downloadServices = Object.keys(downloadsByService);
   useEffect(() => {
     if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
@@ -116,6 +127,14 @@ export default function Watch() {
     )}`;
   }, [slug, currentEp, audio]);
   const embedUrl = activeStream?.embed_url || activeStream?.service_url || fallbackEmbed;
+
+  // Iframe loader — reset whenever embed/server changes
+  const [iframeLoading, setIframeLoading] = useState(true);
+  useEffect(() => {
+    setIframeLoading(true);
+    const t = setTimeout(() => setIframeLoading(false), 10000); // safety
+    return () => clearTimeout(t);
+  }, [embedUrl]);
 
   useEffect(() => {
     const page = Math.ceil(currentEp / EPISODES_PER_PAGE);
@@ -170,10 +189,19 @@ export default function Watch() {
           animate={{ opacity: 1 }}
           className="w-full bg-black"
         >
-          <div className="aspect-video w-full max-h-[80vh] mx-auto bg-black">
+          <div className="aspect-video w-full max-h-[80vh] mx-auto bg-black relative">
+            {iframeLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 gap-3">
+                <div className="h-10 w-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                <p className="text-xs text-muted-foreground">
+                  Loading {activeStream ? label(activeStream.service_name) : "player"}…
+                </p>
+              </div>
+            )}
             <iframe
               key={embedUrl}
               src={embedUrl}
+              onLoad={() => setIframeLoading(false)}
               className="w-full h-full block"
               allowFullScreen
               allow="autoplay; encrypted-media; picture-in-picture"
@@ -288,9 +316,9 @@ export default function Watch() {
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
             </h2>
-            {downloads.length > 0 && (
+            {realDownloads.length > 0 && (
               <span className="text-[11px] sm:text-xs text-muted-foreground">
-                {downloads.length} link{downloads.length === 1 ? "" : "s"}
+                {realDownloads.length} link{realDownloads.length === 1 ? "" : "s"}
               </span>
             )}
           </div>
@@ -469,6 +497,9 @@ export default function Watch() {
             </div>
           </div>
         </section>
+
+        {/* Characters & VAs (paginated) */}
+        <AnimeCharacters animeId={animeId} compact />
 
         <AnimeComments animeId={animeId} />
 

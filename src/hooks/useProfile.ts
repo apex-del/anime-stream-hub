@@ -60,15 +60,16 @@ export function useUserStats(userId?: string) {
   return useQuery({
     queryKey: ["user-stats", targetId],
     queryFn: async () => {
-      if (!targetId) return { favorites: 0, history: 0, comments: 0 };
-      const [fav, hist, com] = await Promise.all([
+      if (!targetId) return { favorites: 0, watched: 0, comments: 0 };
+      const [fav, watched, com] = await Promise.all([
         supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", targetId),
-        supabase.from("watch_history").select("id", { count: "exact", head: true }).eq("user_id", targetId),
+        supabase.from("anime_status" as any).select("id", { count: "exact", head: true })
+          .eq("user_id", targetId).eq("status", "watched"),
         supabase.from("comments").select("id", { count: "exact", head: true }).eq("user_id", targetId),
       ]);
       return {
         favorites: fav.count ?? 0,
-        history: hist.count ?? 0,
+        watched: watched.count ?? 0,
         comments: com.count ?? 0,
       };
     },

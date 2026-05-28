@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Users } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo } from "react";
 
 interface Character {
   character: {
@@ -14,7 +15,11 @@ interface Character {
   }>;
 }
 
-export default function AnimeCharacters({ animeId }: { animeId: number }) {
+const PAGE_SIZE = 12;
+
+export default function AnimeCharacters({ animeId, compact }: { animeId: number; compact?: boolean }) {
+  const [page, setPage] = useState(1);
+
   const { data, isLoading } = useQuery({
     queryKey: ["anime-characters", animeId],
     queryFn: async () => {
@@ -26,36 +31,64 @@ export default function AnimeCharacters({ animeId }: { animeId: number }) {
     enabled: !!animeId,
   });
 
-  const characters = data?.data?.slice(0, 12) || [];
+  const all = data?.data ?? [];
+  const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const pageItems = useMemo(
+    () => all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [all, page]
+  );
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-48 rounded-xl bg-card animate-pulse" />
-        ))}
-      </div>
+      <section className={compact ? "mt-6" : "mt-10"}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-48 rounded-xl bg-card animate-pulse" />
+          ))}
+        </div>
+      </section>
     );
   }
 
-  if (characters.length === 0) return null;
+  if (all.length === 0) return null;
 
   const japaneseVA = (c: Character) =>
-    c.voice_actors.find((va) => va.language === "Japanese");
+    c.voice_actors.find((va) => va.language === "Japanese") || c.voice_actors[0];
 
   return (
-    <section className="mt-10">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-        <Users className="h-5 w-5 text-primary" />
-        Characters & Voice Actors
-      </h2>
+    <section className={compact ? "mt-6" : "mt-10"}>
+      <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
+        <h2 className={`font-bold flex items-center gap-2 ${compact ? "text-base sm:text-lg" : "text-xl md:text-2xl"}`}>
+          <Users className={compact ? "h-4 w-4 text-primary" : "h-5 w-5 text-primary"} />
+          Characters & Voice Actors
+        </h2>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="p-1.5 rounded-md bg-secondary disabled:opacity-40 hover:bg-surface-hover"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="px-1.5">{page}/{totalPages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="p-1.5 rounded-md bg-secondary disabled:opacity-40 hover:bg-surface-hover"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        {characters.map((c) => {
+        {pageItems.map((c) => {
           const va = japaneseVA(c);
           return (
             <div
               key={c.character.mal_id}
-              className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/20 transition-colors"
+              className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/30 transition-colors"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
                 <img
@@ -68,12 +101,21 @@ export default function AnimeCharacters({ animeId }: { animeId: number }) {
                   {c.role}
                 </span>
               </div>
-              <div className="p-2.5">
+              <div className="p-2.5 space-y-1.5">
                 <p className="text-xs font-bold line-clamp-1">{c.character.name}</p>
                 {va && (
-                  <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
-                    🎙 {va.person.name}
-                  </p>
+                  <div className="flex items-center gap-1.5 pt-1 border-t border-border/60">
+                    <img
+                      src={va.person.images.jpg.image_url}
+                      alt={va.person.name}
+                      className="h-6 w-6 rounded-full object-cover shrink-0"
+                      loading="lazy"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">🎙 {va.person.name}</p>
+                      <p className="text-[9px] text-muted-foreground/70">{va.language}</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
