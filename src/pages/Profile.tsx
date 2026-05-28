@@ -166,6 +166,35 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Watched anime (flagged) */}
+        {watchedList.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                <Check className="h-5 w-5 text-emerald-400" /> Watched Anime
+                <span className="text-xs text-muted-foreground font-normal">({watchedList.length})</span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {watchedList.map((a) => (
+                <Link key={a.id} to={`/anime/${a.anime_id}`} className="block group">
+                  {a.anime_image && (
+                    <img
+                      src={a.anime_image}
+                      alt={a.anime_title}
+                      loading="lazy"
+                      className="w-full aspect-[3/4] rounded-lg object-cover group-hover:scale-[1.03] transition-transform"
+                    />
+                  )}
+                  <p className="mt-1.5 text-xs line-clamp-2 group-hover:text-primary transition-colors">
+                    {a.anime_title}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Recent activity */}
         <section className="mt-8 space-y-6">
           <ActivityRow title="Recently Watched" items={activity?.history ?? []} render={(h: any) => (
