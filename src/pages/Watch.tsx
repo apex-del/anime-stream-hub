@@ -315,9 +315,9 @@ export default function Watch() {
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
             </h2>
-            {downloads.length > 0 && (
+            {realDownloads.length > 0 && (
               <span className="text-[11px] sm:text-xs text-muted-foreground">
-                {downloads.length} link{downloads.length === 1 ? "" : "s"}
+                {realDownloads.length} link{realDownloads.length === 1 ? "" : "s"}
               </span>
             )}
           </div>
