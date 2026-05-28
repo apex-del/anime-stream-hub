@@ -87,19 +87,29 @@ export default function Watch() {
     [streams, audio]
   );
 
-  // Auto-select first server when streams change
+  // Auto-select preferred server (turbovid first) when streams change
   useEffect(() => {
     if (filteredStreams.length > 0) {
       if (!filteredStreams.find((s) => s.id === activeServerId)) {
-        setActiveServerId(filteredStreams[0].id);
+        const preferred =
+          filteredStreams.find((s) => s.service_name === "turboviplay") ||
+          filteredStreams.find((s) => /turbo|vid/i.test(s.service_name)) ||
+          filteredStreams[0];
+        setActiveServerId(preferred.id);
       }
     } else {
       setActiveServerId(null);
     }
   }, [filteredStreams, activeServerId]);
 
+  // Only true downloads — exclude pure embed providers (abyss / turboviplay)
+  const realDownloads = useMemo(
+    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
+    [downloads]
+  );
+
   // Group downloads by service & set default tab
-  const downloadsByService = useMemo(() => groupBy(downloads, (d) => d.service_name), [downloads]);
+  const downloadsByService = useMemo(() => groupBy(realDownloads, (d) => d.service_name), [realDownloads]);
   const downloadServices = Object.keys(downloadsByService);
   useEffect(() => {
     if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
@@ -116,6 +126,14 @@ export default function Watch() {
     )}`;
   }, [slug, currentEp, audio]);
   const embedUrl = activeStream?.embed_url || activeStream?.service_url || fallbackEmbed;
+
+  // Iframe loader — reset whenever embed/server changes
+  const [iframeLoading, setIframeLoading] = useState(true);
+  useEffect(() => {
+    setIframeLoading(true);
+    const t = setTimeout(() => setIframeLoading(false), 10000); // safety
+    return () => clearTimeout(t);
+  }, [embedUrl]);
 
   useEffect(() => {
     const page = Math.ceil(currentEp / EPISODES_PER_PAGE);
