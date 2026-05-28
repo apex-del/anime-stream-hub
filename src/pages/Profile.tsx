@@ -1,10 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { User, Camera, Heart, Clock, MessageSquare, Edit2, Save, X } from "lucide-react";
+import { User, Camera, Heart, MessageSquare, Edit2, Save, X, Check } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile, useUpdateProfile, useUserStats, useRecentActivity } from "@/hooks/useProfile";
+import { useAnimeStatusList } from "@/hooks/useAnimeStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
