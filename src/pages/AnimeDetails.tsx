@@ -155,25 +155,32 @@ export default function AnimeDetails() {
                   <Play className="h-3.5 w-3.5 fill-current" />
                   Watch
                 </motion.button>
-                {user && (
-                  <button
-                    onClick={() =>
-                      isFavorite(anime.mal_id)
-                        ? removeFavorite.mutate(anime.mal_id)
-                        : addFavorite.mutate(anime)
-                    }
-                    className={`p-2 rounded-lg border transition-all ${
-                      isFavorite(anime.mal_id)
-                        ? "bg-primary/15 border-primary/30 text-primary"
-                        : "bg-secondary border-border text-muted-foreground hover:text-primary hover:border-primary/30"
-                    }`}
-                    aria-label="Favorite"
-                  >
-                    <Heart
-                      className={`h-4 w-4 ${isFavorite(anime.mal_id) ? "fill-primary" : ""}`}
-                    />
-                  </button>
-                )}
+                <div className="flex items-center gap-1.5">
+                  <AnimeStatusFlag
+                    animeId={anime.mal_id}
+                    animeTitle={getDisplayTitle(anime)}
+                    animeImage={anime.images.webp.large_image_url}
+                  />
+                  {user && (
+                    <button
+                      onClick={() =>
+                        isFavorite(anime.mal_id)
+                          ? removeFavorite.mutate(anime.mal_id)
+                          : addFavorite.mutate(anime)
+                      }
+                      className={`p-2 rounded-lg border transition-all ${
+                        isFavorite(anime.mal_id)
+                          ? "bg-primary/15 border-primary/30 text-primary"
+                          : "bg-secondary border-border text-muted-foreground hover:text-primary hover:border-primary/30"
+                      }`}
+                      aria-label="Favorite"
+                    >
+                      <Heart
+                        className={`h-4 w-4 ${isFavorite(anime.mal_id) ? "fill-primary" : ""}`}
+                      />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
