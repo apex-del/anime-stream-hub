@@ -334,6 +334,7 @@ export default function Watch() {
           <div className="flex items-center justify-between mb-3 gap-2">
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
+              <span className="text-[10px] font-normal text-muted-foreground">(shortened)</span>
             </h2>
             {realDownloads.length > 0 && (
               <span className="text-[11px] sm:text-xs text-muted-foreground">
