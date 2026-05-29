@@ -59,7 +59,9 @@ export default function Home() {
         <div className="h-[70vh] min-h-[500px] bg-card animate-pulse" />
       )}
 
-      <div className="space-y-2 pb-12">
+      <ContinueWatching />
+
+      <div className="space-y-2 pb-12 pt-4">
         <AnimeRow
           title="🔥 Trending Now"
           animeList={airingData?.data || []}
