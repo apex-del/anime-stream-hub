@@ -363,7 +363,7 @@ export default function Watch() {
                         : "bg-secondary border-border text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {label(svc)}
+                    {shortLabel(svc)}
                     <span className="ml-1.5 opacity-70">({downloadsByService[svc].length})</span>
                   </button>
                 ))}
