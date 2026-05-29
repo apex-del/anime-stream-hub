@@ -55,6 +55,19 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 const label = (s: string) => SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+// Shortener detection — only show shortened download links (cuty / gplinks / upfiles)
+const SHORTENERS = [
+  { key: "cuty", label: "Cuty.io", patterns: ["cuty.io", "cuty.exe", "cuty."] },
+  { key: "gplinks", label: "GPLinks", patterns: ["gplinks.in", "gplinks.co", "gplinks."] },
+  { key: "upfiles", label: "UpFiles", patterns: ["upfiles.com", "upfiles."] },
+];
+function detectShortener(url: string): string | null {
+  const u = (url || "").toLowerCase();
+  for (const s of SHORTENERS) if (s.patterns.some((p) => u.includes(p))) return s.key;
+  return null;
+}
+const shortLabel = (k: string) => SHORTENERS.find((s) => s.key === k)?.label ?? k;
+
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
   const animeId = Number(id);
@@ -103,14 +116,20 @@ export default function Watch() {
     }
   }, [filteredStreams, activeServerId]);
 
-  // Only true downloads — exclude pure embed providers (abyss / turboviplay)
+  // Only shortened download links (cuty / gplinks / upfiles) — no direct/embed links
   const realDownloads = useMemo(
-    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
+    () =>
+      downloads.filter(
+        (d: any) => (d.link_type ?? "download") !== "embed" && detectShortener(d.service_url) !== null
+      ),
     [downloads]
   );
 
-  // Group downloads by service & set default tab
-  const downloadsByService = useMemo(() => groupBy(realDownloads, (d) => d.service_name), [realDownloads]);
+  // Group downloads by shortener service & set default tab
+  const downloadsByService = useMemo(
+    () => groupBy(realDownloads, (d) => detectShortener(d.service_url) as string),
+    [realDownloads]
+  );
   const downloadServices = Object.keys(downloadsByService);
   useEffect(() => {
     if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
@@ -315,6 +334,7 @@ export default function Watch() {
           <div className="flex items-center justify-between mb-3 gap-2">
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
+              <span className="text-[10px] font-normal text-muted-foreground">(shortened)</span>
             </h2>
             {realDownloads.length > 0 && (
               <span className="text-[11px] sm:text-xs text-muted-foreground">
@@ -343,7 +363,7 @@ export default function Watch() {
                         : "bg-secondary border-border text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {label(svc)}
+                    {shortLabel(svc)}
                     <span className="ml-1.5 opacity-70">({downloadsByService[svc].length})</span>
                   </button>
                 ))}
@@ -361,8 +381,11 @@ export default function Watch() {
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold truncate">{label(d.service_name)}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                        <span>{d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}</span>
+                        <span className="rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[9px] font-semibold uppercase">
+                          via {shortLabel(detectShortener(d.service_url) || "")}
+                        </span>
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />

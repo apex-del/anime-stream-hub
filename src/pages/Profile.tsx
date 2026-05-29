@@ -1,14 +1,27 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
-import { User, Camera, Heart, MessageSquare, Edit2, Save, X, Check } from "lucide-react";
+import {
+  User, Camera, Heart, MessageSquare, Edit2, Save, X, Check,
+  Clock, Eye, CalendarClock, XCircle, UserPlus, UserCheck, BarChart3,
+} from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile, useUpdateProfile, useUserStats, useRecentActivity } from "@/hooks/useProfile";
-import { useAnimeStatusList } from "@/hooks/useAnimeStatus";
+import { useAnimeStatusList, type AnimeStatusValue } from "@/hooks/useAnimeStatus";
+import { useFollowCounts, useIsFollowing, useToggleFollow } from "@/hooks/useFollows";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+type TabKey = "overview" | "watched" | "watching" | "planning" | "dropped" | "recent" | "favorites";
+
+const STATUS_TABS: { key: AnimeStatusValue; label: string; icon: any }[] = [
+  { key: "watched", label: "Watched", icon: Check },
+  { key: "watching", label: "Watching", icon: Eye },
+  { key: "planning", label: "Planning", icon: CalendarClock },
+  { key: "dropped", label: "Dropped", icon: XCircle },
+];
 
 export default function Profile() {
   const { userId } = useParams<{ userId?: string }>();
@@ -19,7 +32,10 @@ export default function Profile() {
   const { data: profile, isLoading } = useProfile(ownerId);
   const { data: stats } = useUserStats(ownerId);
   const { data: activity } = useRecentActivity(ownerId);
-  const { data: watchedList = [] } = useAnimeStatusList(ownerId, "watched");
+  const { data: allStatus = [] } = useAnimeStatusList(ownerId);
+  const { data: follow } = useFollowCounts(ownerId);
+  const { data: isFollowing = false } = useIsFollowing(isOwn ? undefined : ownerId);
+  const toggleFollow = useToggleFollow();
   const updateProfile = useUpdateProfile();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -27,6 +43,13 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [tab, setTab] = useState<TabKey>("overview");
+
+  const byStatus = useMemo(() => {
+    const m: Record<string, typeof allStatus> = { watched: [], watching: [], planning: [], dropped: [] };
+    allStatus.forEach((a) => { (m[a.status] ||= []).push(a); });
+    return m;
+  }, [allStatus]);
 
   const startEdit = () => {
     setDisplayName(profile?.display_name ?? "");
@@ -65,6 +88,16 @@ export default function Profile() {
       </Layout>
     );
   }
+
+  const tabs: { key: TabKey; label: string; count?: number }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "watched", label: "Watched", count: byStatus.watched.length },
+    { key: "watching", label: "Watching", count: byStatus.watching.length },
+    { key: "planning", label: "Planning", count: byStatus.planning.length },
+    { key: "dropped", label: "Dropped", count: byStatus.dropped.length },
+    { key: "recent", label: "Recently Watched", count: activity?.history?.length },
+    { key: "favorites", label: "Favorites", count: activity?.favorites?.length },
+  ];
 
   return (
     <Layout>
@@ -129,13 +162,32 @@ export default function Profile() {
                     <h1 className="text-2xl sm:text-3xl font-extrabold">
                       {profile?.display_name || "Unnamed user"}
                     </h1>
-                    {isOwn && (
+                    {isOwn ? (
                       <button onClick={startEdit}
                         className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-secondary transition-colors">
                         <Edit2 className="h-4 w-4" />
                       </button>
-                    )}
+                    ) : user ? (
+                      <button
+                        onClick={() => ownerId && toggleFollow.mutate({ targetId: ownerId, isFollowing })}
+                        disabled={toggleFollow.isPending}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                          isFollowing
+                            ? "bg-secondary text-foreground hover:bg-surface-hover"
+                            : "bg-primary text-primary-foreground hover:bg-primary/90"
+                        }`}
+                      >
+                        {isFollowing ? <><UserCheck className="h-4 w-4" /> Following</> : <><UserPlus className="h-4 w-4" /> Follow</>}
+                      </button>
+                    ) : null}
                   </div>
+
+                  {/* Follower counts */}
+                  <div className="mt-2 flex items-center gap-4 justify-center sm:justify-start text-sm">
+                    <span><strong>{follow?.followers ?? 0}</strong> <span className="text-muted-foreground">followers</span></span>
+                    <span><strong>{follow?.following ?? 0}</strong> <span className="text-muted-foreground">following</span></span>
+                  </div>
+
                   {profile?.bio && (
                     <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{profile.bio}</p>
                   )}
@@ -150,96 +202,117 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
+          {/* Stats dashboard */}
+          <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
             {[
               { icon: Heart, label: "Favorites", value: stats?.favorites ?? 0 },
-              { icon: Check, label: "Watched", value: stats?.watched ?? 0 },
+              { icon: Check, label: "Watched", value: byStatus.watched.length },
+              { icon: Eye, label: "Watching", value: byStatus.watching.length },
+              { icon: CalendarClock, label: "Planning", value: byStatus.planning.length },
+              { icon: XCircle, label: "Dropped", value: byStatus.dropped.length },
               { icon: MessageSquare, label: "Comments", value: stats?.comments ?? 0 },
             ].map((s) => (
-              <div key={s.label} className="rounded-xl bg-secondary/50 border border-border p-3 sm:p-4 text-center">
+              <div key={s.label} className="rounded-xl bg-secondary/50 border border-border p-3 text-center">
                 <s.icon className="h-5 w-5 text-primary mx-auto mb-1" />
-                <div className="text-xl sm:text-2xl font-bold">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="text-lg sm:text-2xl font-bold">{s.value}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">{s.label}</div>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Watched anime (flagged) */}
-        {watchedList.length > 0 && (
-          <section className="mt-8">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-400" /> Watched Anime
-                <span className="text-xs text-muted-foreground font-normal">({watchedList.length})</span>
-              </h2>
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {watchedList.map((a) => (
-                <Link key={a.id} to={`/anime/${a.anime_id}`} className="block group">
-                  {a.anime_image && (
-                    <img
-                      src={a.anime_image}
-                      alt={a.anime_title}
-                      loading="lazy"
-                      className="w-full aspect-[3/4] rounded-lg object-cover group-hover:scale-[1.03] transition-transform"
-                    />
-                  )}
-                  <p className="mt-1.5 text-xs line-clamp-2 group-hover:text-primary transition-colors">
-                    {a.anime_title}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Tabs */}
+        <div className="mt-6 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`shrink-0 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold border transition-all ${
+                tab === t.key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+              {typeof t.count === "number" && <span className="ml-1.5 opacity-70">({t.count})</span>}
+            </button>
+          ))}
+        </div>
 
-        {/* Recent activity */}
-        <section className="mt-8 space-y-6">
-          <ActivityRow title="Recently Watched" items={activity?.history ?? []} render={(h: any) => (
-            <Link to={`/anime/${h.anime_id}`} className="block">
-              <img src={h.anime_image} alt={h.anime_title} className="w-full aspect-[3/4] rounded-lg object-cover" />
-              <p className="mt-1.5 text-xs line-clamp-2">{h.anime_title}</p>
-              {h.episode_number && <p className="text-[10px] text-muted-foreground">Ep {h.episode_number}</p>}
-            </Link>
-          )} />
-
-          <ActivityRow title="Favorites" items={activity?.favorites ?? []} render={(f: any) => (
-            <Link to={`/anime/${f.anime_id}`} className="block">
-              <img src={f.anime_image} alt={f.anime_title} className="w-full aspect-[3/4] rounded-lg object-cover" />
-              <p className="mt-1.5 text-xs line-clamp-2">{f.anime_title}</p>
-            </Link>
-          )} />
-
-          {(activity?.comments?.length ?? 0) > 0 && (
-            <div>
-              <h2 className="text-lg font-bold mb-3">Recent Comments</h2>
-              <div className="space-y-2">
-                {activity!.comments.map((c: any) => (
-                  <Link key={c.id} to={`/anime/${c.anime_id}`}
-                    className="block rounded-lg bg-card border border-border p-3 hover:border-primary/30 transition-colors">
-                    <p className="text-sm line-clamp-2">{c.content}</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString()}</p>
-                  </Link>
-                ))}
-              </div>
+        {/* Tab content */}
+        <div className="mt-5">
+          {tab === "overview" && (
+            <div className="space-y-8">
+              <AnimeGrid title="Recently Watched" items={(activity?.history ?? []).slice(0, 6)} subKey="episode_number" />
+              <AnimeGrid title="Favorites" items={(activity?.favorites ?? []).slice(0, 6)} />
+              {(activity?.comments?.length ?? 0) > 0 && (
+                <div>
+                  <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> Recent Comments</h2>
+                  <div className="space-y-2">
+                    {activity!.comments.map((c: any) => (
+                      <Link key={c.id} to={`/anime/${c.anime_id}`}
+                        className="block rounded-lg bg-card border border-border p-3 hover:border-primary/30 transition-colors">
+                        <p className="text-sm line-clamp-2">{c.content}</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString()}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!activity?.history?.length && !activity?.favorites?.length && !activity?.comments?.length && (
+                <EmptyState text="No activity yet." />
+              )}
             </div>
           )}
-        </section>
+
+          {STATUS_TABS.map((s) => tab === s.key && (
+            <AnimeGrid key={s.key} items={byStatus[s.key]} flat empty={`Nothing marked as ${s.label.toLowerCase()} yet.`} />
+          ))}
+
+          {tab === "recent" && (
+            <AnimeGrid items={activity?.history ?? []} flat subKey="episode_number" empty="No watch history yet." />
+          )}
+
+          {tab === "favorites" && (
+            <AnimeGrid items={activity?.favorites ?? []} flat empty="No favorites yet." />
+          )}
+        </div>
       </div>
     </Layout>
   );
 }
 
-function ActivityRow({ title, items, render }: { title: string; items: any[]; render: (i: any) => React.ReactNode }) {
-  if (!items.length) return null;
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+      {text}
+    </div>
+  );
+}
+
+function AnimeGrid({
+  title, items, flat, empty, subKey,
+}: { title?: string; items: any[]; flat?: boolean; empty?: string; subKey?: string }) {
+  if (!items.length) {
+    if (flat) return <EmptyState text={empty || "Nothing here yet."} />;
+    return null;
+  }
   return (
     <div>
-      <h2 className="text-lg font-bold mb-3">{title}</h2>
+      {title && <h2 className="text-lg font-bold mb-3">{title}</h2>}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-        {items.map((it: any) => (
-          <div key={it.id}>{render(it)}</div>
+        {items.map((a: any) => (
+          <Link key={a.id} to={`/anime/${a.anime_id}`} className="block group">
+            {a.anime_image && (
+              <img src={a.anime_image} alt={a.anime_title} loading="lazy"
+                className="w-full aspect-[3/4] rounded-lg object-cover group-hover:scale-[1.03] transition-transform" />
+            )}
+            <p className="mt-1.5 text-xs line-clamp-2 group-hover:text-primary transition-colors">{a.anime_title}</p>
+            {subKey && a[subKey] != null && (
+              <p className="text-[10px] text-muted-foreground">Ep {a[subKey]}</p>
+            )}
+          </Link>
         ))}
       </div>
     </div>

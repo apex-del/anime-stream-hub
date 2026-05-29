@@ -5,6 +5,17 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
@@ -90,13 +101,33 @@ export default function Settings() {
             </div>
 
             {/* Sign Out */}
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-4 font-medium text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-4 font-medium text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You'll need to sign in again to access your favorites, history and watch lists.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleSignOut}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Sign Out
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>

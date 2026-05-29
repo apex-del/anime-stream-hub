@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
@@ -35,6 +36,46 @@ const queryClient = new QueryClient({
   },
 });
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+      >
+        <Routes location={location}>
+          <Route path="/" element={<Index />} />
+          <Route path="/browse" element={<Browse />} />
+          <Route path="/anime/:id" element={<AnimeDetails />} />
+          <Route path="/watch/:id" element={<Watch />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/top-charts" element={<TopCharts />} />
+          <Route path="/random" element={<RandomAnime />} />
+          <Route path="/download" element={<Download />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/genres" element={<Genres />} />
+          <Route path="/watchlist" element={<WatchList />} />
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/studios" element={<Studios />} />
+          <Route path="/upcoming" element={<Upcoming />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -42,30 +83,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/browse" element={<Browse />} />
-            <Route path="/anime/:id" element={<AnimeDetails />} />
-            <Route path="/watch/:id" element={<Watch />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/top-charts" element={<TopCharts />} />
-            <Route path="/random" element={<RandomAnime />} />
-            <Route path="/download" element={<Download />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/genres" element={<Genres />} />
-            <Route path="/watchlist" element={<WatchList />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/studios" element={<Studios />} />
-            <Route path="/upcoming" element={<Upcoming />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AnimatedRoutes />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

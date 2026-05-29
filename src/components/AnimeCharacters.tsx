@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Mic, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
 
 interface Character {
@@ -17,8 +17,24 @@ interface Character {
 
 const PAGE_SIZE = 12;
 
+function Pager({ page, totalPages, onPrev, onNext }: { page: number; totalPages: number; onPrev: () => void; onNext: () => void }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <button onClick={onPrev} disabled={page <= 1} className="p-1.5 rounded-md bg-secondary disabled:opacity-40 hover:bg-surface-hover">
+        <ChevronLeft className="h-3.5 w-3.5" />
+      </button>
+      <span className="px-1.5">{page}/{totalPages}</span>
+      <button onClick={onNext} disabled={page >= totalPages} className="p-1.5 rounded-md bg-secondary disabled:opacity-40 hover:bg-surface-hover">
+        <ChevronRight className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 export default function AnimeCharacters({ animeId, compact }: { animeId: number; compact?: boolean }) {
-  const [page, setPage] = useState(1);
+  const [charPage, setCharPage] = useState(1);
+  const [vaPage, setVaPage] = useState(1);
 
   const { data, isLoading } = useQuery({
     queryKey: ["anime-characters", animeId],
@@ -32,11 +48,30 @@ export default function AnimeCharacters({ animeId, compact }: { animeId: number;
   });
 
   const all = data?.data ?? [];
-  const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
-  const pageItems = useMemo(
-    () => all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [all, page]
+
+  // Characters sorted by role (Main first)
+  const characters = useMemo(
+    () => [...all].sort((a, b) => (a.role === "Main" ? -1 : 1) - (b.role === "Main" ? -1 : 1)),
+    [all]
   );
+
+  // Voice actors deduped (prefer Japanese), with the characters they voice
+  const voiceActors = useMemo(() => {
+    const map = new Map<number, { person: Character["voice_actors"][0]["person"]; language: string; chars: Set<string> }>();
+    all.forEach((c) => {
+      const va = c.voice_actors.find((v) => v.language === "Japanese") || c.voice_actors[0];
+      if (!va) return;
+      const existing = map.get(va.person.mal_id);
+      if (existing) existing.chars.add(c.character.name);
+      else map.set(va.person.mal_id, { person: va.person, language: va.language, chars: new Set([c.character.name]) });
+    });
+    return Array.from(map.values());
+  }, [all]);
+
+  const charTotal = Math.max(1, Math.ceil(characters.length / PAGE_SIZE));
+  const vaTotal = Math.max(1, Math.ceil(voiceActors.length / PAGE_SIZE));
+  const charItems = characters.slice((charPage - 1) * PAGE_SIZE, charPage * PAGE_SIZE);
+  const vaItems = voiceActors.slice((vaPage - 1) * PAGE_SIZE, vaPage * PAGE_SIZE);
 
   if (isLoading) {
     return (
@@ -51,45 +86,23 @@ export default function AnimeCharacters({ animeId, compact }: { animeId: number;
   }
 
   if (all.length === 0) return null;
-
-  const japaneseVA = (c: Character) =>
-    c.voice_actors.find((va) => va.language === "Japanese") || c.voice_actors[0];
+  const headingSize = compact ? "text-base sm:text-lg" : "text-xl md:text-2xl";
 
   return (
-    <section className={compact ? "mt-6" : "mt-10"}>
-      <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-        <h2 className={`font-bold flex items-center gap-2 ${compact ? "text-base sm:text-lg" : "text-xl md:text-2xl"}`}>
-          <Users className={compact ? "h-4 w-4 text-primary" : "h-5 w-5 text-primary"} />
-          Characters & Voice Actors
-        </h2>
-        {totalPages > 1 && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="p-1.5 rounded-md bg-secondary disabled:opacity-40 hover:bg-surface-hover"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
-            <span className="px-1.5">{page}/{totalPages}</span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="p-1.5 rounded-md bg-secondary disabled:opacity-40 hover:bg-surface-hover"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        {pageItems.map((c) => {
-          const va = japaneseVA(c);
-          return (
-            <div
-              key={c.character.mal_id}
-              className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/30 transition-colors"
-            >
+    <>
+      {/* Characters */}
+      <section className={compact ? "mt-6" : "mt-10"}>
+        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
+          <h2 className={`font-bold flex items-center gap-2 ${headingSize}`}>
+            <Users className={compact ? "h-4 w-4 text-primary" : "h-5 w-5 text-primary"} />
+            Characters
+            <span className="text-xs text-muted-foreground font-normal">({characters.length})</span>
+          </h2>
+          <Pager page={charPage} totalPages={charTotal} onPrev={() => setCharPage((p) => Math.max(1, p - 1))} onNext={() => setCharPage((p) => Math.min(charTotal, p + 1))} />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {charItems.map((c) => (
+            <div key={c.character.mal_id} className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/30 transition-colors">
               <div className="relative aspect-[3/4] overflow-hidden">
                 <img
                   src={c.character.images.webp?.image_url || c.character.images.jpg.image_url}
@@ -101,27 +114,48 @@ export default function AnimeCharacters({ animeId, compact }: { animeId: number;
                   {c.role}
                 </span>
               </div>
-              <div className="p-2.5 space-y-1.5">
-                <p className="text-xs font-bold line-clamp-1">{c.character.name}</p>
-                {va && (
-                  <div className="flex items-center gap-1.5 pt-1 border-t border-border/60">
-                    <img
-                      src={va.person.images.jpg.image_url}
-                      alt={va.person.name}
-                      className="h-6 w-6 rounded-full object-cover shrink-0"
-                      loading="lazy"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground line-clamp-1">🎙 {va.person.name}</p>
-                      <p className="text-[9px] text-muted-foreground/70">{va.language}</p>
-                    </div>
-                  </div>
-                )}
+              <div className="p-2.5">
+                <p className="text-xs font-bold line-clamp-2">{c.character.name}</p>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </section>
+          ))}
+        </div>
+      </section>
+
+      {/* Voice Actors */}
+      {voiceActors.length > 0 && (
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
+            <h2 className={`font-bold flex items-center gap-2 ${headingSize}`}>
+              <Mic className={compact ? "h-4 w-4 text-primary" : "h-5 w-5 text-primary"} />
+              Voice Actors
+              <span className="text-xs text-muted-foreground font-normal">({voiceActors.length})</span>
+            </h2>
+            <Pager page={vaPage} totalPages={vaTotal} onPrev={() => setVaPage((p) => Math.max(1, p - 1))} onNext={() => setVaPage((p) => Math.min(vaTotal, p + 1))} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {vaItems.map((va) => (
+              <div key={va.person.mal_id} className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/30 transition-colors">
+                <div className="relative aspect-[3/4] overflow-hidden">
+                  <img
+                    src={va.person.images.jpg.image_url}
+                    alt={va.person.name}
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                  <span className="absolute top-1.5 right-1.5 rounded-full bg-primary/80 px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
+                    {va.language}
+                  </span>
+                </div>
+                <div className="p-2.5 space-y-0.5">
+                  <p className="text-xs font-bold line-clamp-1">{va.person.name}</p>
+                  <p className="text-[10px] text-muted-foreground line-clamp-1">as {Array.from(va.chars).join(", ")}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
   );
 }
