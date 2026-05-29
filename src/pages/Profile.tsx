@@ -33,7 +33,6 @@ export default function Profile() {
   const { data: stats } = useUserStats(ownerId);
   const { data: activity } = useRecentActivity(ownerId);
   const { data: allStatus = [] } = useAnimeStatusList(ownerId);
-  const { data: favList = [] } = useState as any; // placeholder removed below
   const { data: follow } = useFollowCounts(ownerId);
   const { data: isFollowing = false } = useIsFollowing(isOwn ? undefined : ownerId);
   const toggleFollow = useToggleFollow();
