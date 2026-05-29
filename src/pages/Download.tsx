@@ -30,10 +30,12 @@ const SHORTENERS = [
 ];
 
 function detectShortener(url: string): string | null {
-  const u = url.toLowerCase();
+  const u = (url || "").toLowerCase();
   for (const s of SHORTENERS) if (s.patterns.some((p) => u.includes(p))) return s.key;
   return null;
 }
+
+const normQuality = (q?: string) => (q || "all").toLowerCase().replace(/\s+/g, "");
 
 export default function DownloadPage() {
   const [params] = useSearchParams();
@@ -43,36 +45,59 @@ export default function DownloadPage() {
 
   const { data: downloads = [], isLoading } = useEpisodeDownloads(animeId, episode);
 
-  // Only true downloads (skip embed-only providers)
-  const realDownloads = useMemo(
-    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
+  // Only shortened links (cuty / gplinks / upfiles) — no direct/embed links
+  const shortLinks = useMemo(
+    () =>
+      downloads.filter(
+        (d: any) => (d.link_type ?? "download") !== "embed" && detectShortener(d.service_url) !== null
+      ),
     [downloads]
   );
 
-  // Detect available shorteners in dataset
+  // Service (shortener) tabs
   const shortenerKeys = useMemo(() => {
     const set = new Set<string>();
-    realDownloads.forEach((d) => {
+    shortLinks.forEach((d) => {
       const k = detectShortener(d.service_url);
       if (k) set.add(k);
     });
     return Array.from(set);
-  }, [realDownloads]);
+  }, [shortLinks]);
 
-  const tabs = useMemo(
-    () => [{ key: "all", label: "All" }, ...shortenerKeys.map((k) => ({ key: k, label: SHORTENERS.find((s) => s.key === k)?.label ?? k }))],
+  const serviceTabs = useMemo(
+    () => [{ key: "all", label: "All Services" }, ...shortenerKeys.map((k) => ({ key: k, label: SHORTENERS.find((s) => s.key === k)?.label ?? k }))],
     [shortenerKeys]
   );
 
-  const [activeTab, setActiveTab] = useState<string>("all");
+  // Quality tabs
+  const qualityKeys = useMemo(() => {
+    const set = new Set<string>();
+    shortLinks.forEach((d) => set.add(normQuality(d.quality)));
+    return Array.from(set).sort((a, b) => (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true }));
+  }, [shortLinks]);
+
+  const qualityTabs = useMemo(
+    () => [{ key: "all", label: "All Quality" }, ...qualityKeys.map((k) => ({ key: k, label: k.toUpperCase() }))],
+    [qualityKeys]
+  );
+
+  const [activeService, setActiveService] = useState("all");
+  const [activeQuality, setActiveQuality] = useState("all");
+
   useEffect(() => {
-    if (!tabs.find((t) => t.key === activeTab)) setActiveTab("all");
-  }, [tabs, activeTab]);
+    if (!serviceTabs.find((t) => t.key === activeService)) setActiveService("all");
+  }, [serviceTabs, activeService]);
+  useEffect(() => {
+    if (!qualityTabs.find((t) => t.key === activeQuality)) setActiveQuality("all");
+  }, [qualityTabs, activeQuality]);
 
   const visibleLinks = useMemo(() => {
-    if (activeTab === "all") return realDownloads;
-    return realDownloads.filter((d) => detectShortener(d.service_url) === activeTab);
-  }, [realDownloads, activeTab]);
+    return shortLinks.filter((d) => {
+      const matchService = activeService === "all" || detectShortener(d.service_url) === activeService;
+      const matchQuality = activeQuality === "all" || normQuality(d.quality) === activeQuality;
+      return matchService && matchQuality;
+    });
+  }, [shortLinks, activeService, activeQuality]);
 
   const searchQuery = `${title} Episode ${episode} download`;
 
@@ -108,28 +133,54 @@ export default function DownloadPage() {
           </div>
         </div>
 
-        {/* Shortener tabs */}
-        {!isLoading && realDownloads.length > 0 && tabs.length > 1 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {tabs.map((t) => {
-              const count = t.key === "all"
-                ? realDownloads.length
-                : realDownloads.filter((d) => detectShortener(d.service_url) === t.key).length;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setActiveTab(t.key)}
-                  className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold border transition-all ${
-                    activeTab === t.key
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t.label}
-                  <span className="ml-1.5 opacity-70">({count})</span>
-                </button>
-              );
-            })}
+        {/* Filters */}
+        {!isLoading && shortLinks.length > 0 && (
+          <div className="space-y-3 mb-5">
+            {/* Quality tabs */}
+            {qualityTabs.length > 1 && (
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Quality</p>
+                <div className="flex flex-wrap gap-2">
+                  {qualityTabs.map((t) => {
+                    const count = t.key === "all" ? shortLinks.length : shortLinks.filter((d) => normQuality(d.quality) === t.key).length;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setActiveQuality(t.key)}
+                        className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold border transition-all ${
+                          activeQuality === t.key ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {t.label}<span className="ml-1.5 opacity-70">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Shortener service tabs */}
+            {serviceTabs.length > 1 && (
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Shortener Service</p>
+                <div className="flex flex-wrap gap-2">
+                  {serviceTabs.map((t) => {
+                    const count = t.key === "all" ? shortLinks.length : shortLinks.filter((d) => detectShortener(d.service_url) === t.key).length;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setActiveService(t.key)}
+                        className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold border transition-all ${
+                          activeService === t.key ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {t.label}<span className="ml-1.5 opacity-70">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -141,7 +192,7 @@ export default function DownloadPage() {
         ) : visibleLinks.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground mb-3">
-              No direct shortened links yet for Episode {episode}. Try a Google search:
+              No shortened download links {shortLinks.length > 0 ? "match this filter" : `yet for Episode ${episode}`}. Try a Google search:
             </p>
             <a
               href={`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`}
