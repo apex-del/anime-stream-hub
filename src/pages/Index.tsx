@@ -3,6 +3,7 @@ import HeroSection from "@/components/HeroSection";
 import AnimeRow from "@/components/AnimeRow";
 import AnimeCard from "@/components/AnimeCard";
 import LeaderboardGrid from "@/components/LeaderboardGrid";
+import ContinueWatching from "@/components/ContinueWatching";
 import { useTopAnime, useSeasonNow } from "@/hooks/useAnime";
 import type { JikanAnime } from "@/lib/jikan";
 
