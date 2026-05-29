@@ -116,14 +116,20 @@ export default function Watch() {
     }
   }, [filteredStreams, activeServerId]);
 
-  // Only true downloads — exclude pure embed providers (abyss / turboviplay)
+  // Only shortened download links (cuty / gplinks / upfiles) — no direct/embed links
   const realDownloads = useMemo(
-    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
+    () =>
+      downloads.filter(
+        (d: any) => (d.link_type ?? "download") !== "embed" && detectShortener(d.service_url) !== null
+      ),
     [downloads]
   );
 
-  // Group downloads by service & set default tab
-  const downloadsByService = useMemo(() => groupBy(realDownloads, (d) => d.service_name), [realDownloads]);
+  // Group downloads by shortener service & set default tab
+  const downloadsByService = useMemo(
+    () => groupBy(realDownloads, (d) => detectShortener(d.service_url) as string),
+    [realDownloads]
+  );
   const downloadServices = Object.keys(downloadsByService);
   useEffect(() => {
     if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
