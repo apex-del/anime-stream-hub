@@ -381,8 +381,11 @@ export default function Watch() {
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold truncate">{label(d.service_name)}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                        <span>{d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}</span>
+                        <span className="rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[9px] font-semibold uppercase">
+                          via {shortLabel(detectShortener(d.service_url) || "")}
+                        </span>
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
