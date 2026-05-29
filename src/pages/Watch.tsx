@@ -55,6 +55,19 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 const label = (s: string) => SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+// Shortener detection — only show shortened download links (cuty / gplinks / upfiles)
+const SHORTENERS = [
+  { key: "cuty", label: "Cuty.io", patterns: ["cuty.io", "cuty.exe", "cuty."] },
+  { key: "gplinks", label: "GPLinks", patterns: ["gplinks.in", "gplinks.co", "gplinks."] },
+  { key: "upfiles", label: "UpFiles", patterns: ["upfiles.com", "upfiles."] },
+];
+function detectShortener(url: string): string | null {
+  const u = (url || "").toLowerCase();
+  for (const s of SHORTENERS) if (s.patterns.some((p) => u.includes(p))) return s.key;
+  return null;
+}
+const shortLabel = (k: string) => SHORTENERS.find((s) => s.key === k)?.label ?? k;
+
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
   const animeId = Number(id);
