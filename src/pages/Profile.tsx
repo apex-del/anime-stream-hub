@@ -3,16 +3,19 @@ import { useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   User, Camera, Heart, MessageSquare, Edit2, Save, X, Check,
-  Clock, Eye, CalendarClock, XCircle, UserPlus, UserCheck, BarChart3,
+  Clock, Eye, CalendarClock, XCircle, UserPlus, UserCheck, BarChart3, Users,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile, useUpdateProfile, useUserStats, useRecentActivity } from "@/hooks/useProfile";
 import { useAnimeStatusList, type AnimeStatusValue } from "@/hooks/useAnimeStatus";
-import { useFollowCounts, useIsFollowing, useToggleFollow } from "@/hooks/useFollows";
+import { useFollowCounts, useIsFollowing, useToggleFollow, useSuggestedUsers } from "@/hooks/useFollows";
+import FollowListDialog from "@/components/FollowListDialog";
+import ShareButton from "@/components/ShareButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 
 type TabKey = "overview" | "watched" | "watching" | "planning" | "dropped" | "recent" | "favorites";
 
