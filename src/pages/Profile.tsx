@@ -38,6 +38,7 @@ export default function Profile() {
   const { data: allStatus = [] } = useAnimeStatusList(ownerId);
   const { data: follow } = useFollowCounts(ownerId);
   const { data: isFollowing = false } = useIsFollowing(isOwn ? undefined : ownerId);
+  const { data: suggested = [] } = useSuggestedUsers(user?.id);
   const toggleFollow = useToggleFollow();
   const updateProfile = useUpdateProfile();
   const { toast } = useToast();
@@ -47,6 +48,7 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [tab, setTab] = useState<TabKey>("overview");
+  const [followDialog, setFollowDialog] = useState<null | "followers" | "following">(null);
 
   const byStatus = useMemo(() => {
     const m: Record<string, typeof allStatus> = { watched: [], watching: [], planning: [], dropped: [] };
