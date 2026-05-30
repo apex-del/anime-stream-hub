@@ -276,6 +276,32 @@ export default function Profile() {
               {!activity?.history?.length && !activity?.favorites?.length && !activity?.comments?.length && (
                 <EmptyState text="No activity yet." />
               )}
+
+              {/* Discover people to follow */}
+              {isOwn && suggested.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" /> Discover People
+                  </h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {suggested.map((p) => (
+                      <Link
+                        key={p.user_id}
+                        to={`/profile/${p.user_id}`}
+                        className="flex items-center gap-3 rounded-xl bg-card border border-border p-3 hover:border-primary/30 transition-colors min-w-0"
+                      >
+                        <Avatar className="h-10 w-10 shrink-0">
+                          <AvatarImage src={p.avatar_url ?? undefined} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                            {(p.display_name?.[0] ?? "U").toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium truncate">{p.display_name || "Unnamed user"}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
