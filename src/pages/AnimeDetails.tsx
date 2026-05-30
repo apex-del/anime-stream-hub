@@ -181,6 +181,11 @@ export default function AnimeDetails() {
                       />
                     </button>
                   )}
+                  <ShareButton
+                    variant="icon"
+                    title={getDisplayTitle(anime)}
+                    text={`Check out ${getDisplayTitle(anime)} on AnimeStream`}
+                  />
                 </div>
               </div>
             </div>
