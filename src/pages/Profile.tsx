@@ -318,6 +318,15 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {ownerId && followDialog && (
+        <FollowListDialog
+          userId={ownerId}
+          type={followDialog}
+          open={!!followDialog}
+          onOpenChange={(o) => !o && setFollowDialog(null)}
+        />
+      )}
     </Layout>
   );
 }
