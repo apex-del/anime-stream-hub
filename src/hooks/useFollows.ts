@@ -3,6 +3,51 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+export interface FollowProfile {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+// List of follower OR following profiles for a user
+export function useFollowList(userId?: string, type: "followers" | "following" = "followers") {
+  return useQuery({
+    queryKey: ["follow-list", userId, type],
+    queryFn: async (): Promise<FollowProfile[]> => {
+      if (!userId) return [];
+      const selectCol = type === "followers" ? "follower_id" : "following_id";
+      const matchCol = type === "followers" ? "following_id" : "follower_id";
+      const { data: rows } = await supabase
+        .from("follows" as any)
+        .select(selectCol)
+        .eq(matchCol, userId);
+      const ids = (rows ?? []).map((r: any) => r[selectCol]).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", ids);
+      return (profiles ?? []) as FollowProfile[];
+    },
+    enabled: !!userId,
+  });
+}
+
+// Suggested users to follow (most recently joined profiles, excluding self)
+export function useSuggestedUsers(excludeId?: string, limit = 12) {
+  return useQuery({
+    queryKey: ["suggested-users", excludeId, limit],
+    queryFn: async (): Promise<FollowProfile[]> => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .order("created_at", { ascending: false })
+        .limit(limit + 1);
+      return ((data ?? []) as FollowProfile[]).filter((p) => p.user_id !== excludeId).slice(0, limit);
+    },
+  });
+}
+
 // Counts of followers / following for a profile
 export function useFollowCounts(userId?: string) {
   return useQuery({
