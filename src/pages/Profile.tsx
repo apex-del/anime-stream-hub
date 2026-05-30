@@ -185,12 +185,21 @@ export default function Profile() {
                         {isFollowing ? <><UserCheck className="h-4 w-4" /> Following</> : <><UserPlus className="h-4 w-4" /> Follow</>}
                       </button>
                     ) : null}
+                    <ShareButton
+                      variant="icon"
+                      title={`${profile?.display_name || "A user"} on AnimeStream`}
+                      text={`Check out ${profile?.display_name || "this profile"} on AnimeStream`}
+                    />
                   </div>
 
                   {/* Follower counts */}
                   <div className="mt-2 flex items-center gap-4 justify-center sm:justify-start text-sm">
-                    <span><strong>{follow?.followers ?? 0}</strong> <span className="text-muted-foreground">followers</span></span>
-                    <span><strong>{follow?.following ?? 0}</strong> <span className="text-muted-foreground">following</span></span>
+                    <button onClick={() => ownerId && setFollowDialog("followers")} className="hover:text-primary transition-colors">
+                      <strong>{follow?.followers ?? 0}</strong> <span className="text-muted-foreground">followers</span>
+                    </button>
+                    <button onClick={() => ownerId && setFollowDialog("following")} className="hover:text-primary transition-colors">
+                      <strong>{follow?.following ?? 0}</strong> <span className="text-muted-foreground">following</span>
+                    </button>
                   </div>
 
                   {profile?.bio && (
