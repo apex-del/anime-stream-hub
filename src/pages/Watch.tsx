@@ -6,6 +6,8 @@ import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
 import AnimeCharacters from "@/components/AnimeCharacters";
+import RelatedAnime from "@/components/RelatedAnime";
+import ShareButton from "@/components/ShareButton";
 import {
   useAnimeById,
   useAnimeEpisodes,
@@ -55,18 +57,6 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 const label = (s: string) => SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-// Shortener detection — only show shortened download links (cuty / gplinks / upfiles)
-const SHORTENERS = [
-  { key: "cuty", label: "Cuty.io", patterns: ["cuty.io", "cuty.exe", "cuty."] },
-  { key: "gplinks", label: "GPLinks", patterns: ["gplinks.in", "gplinks.co", "gplinks."] },
-  { key: "upfiles", label: "UpFiles", patterns: ["upfiles.com", "upfiles."] },
-];
-function detectShortener(url: string): string | null {
-  const u = (url || "").toLowerCase();
-  for (const s of SHORTENERS) if (s.patterns.some((p) => u.includes(p))) return s.key;
-  return null;
-}
-const shortLabel = (k: string) => SHORTENERS.find((s) => s.key === k)?.label ?? k;
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
@@ -116,19 +106,37 @@ export default function Watch() {
     }
   }, [filteredStreams, activeServerId]);
 
-  // Only shortened download links (cuty / gplinks / upfiles) — no direct/embed links
+  // Real download links (everything that's not pure-embed), sorted by service
   const realDownloads = useMemo(
-    () =>
-      downloads.filter(
-        (d: any) => (d.link_type ?? "download") !== "embed" && detectShortener(d.service_url) !== null
-      ),
+    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
     [downloads]
   );
 
-  // Group downloads by shortener service & set default tab
+  // Quality filter
+  const qualityKeys = useMemo(() => {
+    const set = new Set<string>();
+    realDownloads.forEach((d) => set.add((d.quality || "all").toLowerCase()));
+    return Array.from(set).sort((a, b) =>
+      (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true })
+    );
+  }, [realDownloads]);
+  const [activeQuality, setActiveQuality] = useState("all");
+  useEffect(() => {
+    if (activeQuality !== "all" && !qualityKeys.includes(activeQuality)) setActiveQuality("all");
+  }, [qualityKeys, activeQuality]);
+
+  const qualityFiltered = useMemo(
+    () =>
+      realDownloads.filter(
+        (d) => activeQuality === "all" || (d.quality || "all").toLowerCase() === activeQuality
+      ),
+    [realDownloads, activeQuality]
+  );
+
+  // Group downloads by service & set default tab
   const downloadsByService = useMemo(
-    () => groupBy(realDownloads, (d) => detectShortener(d.service_url) as string),
-    [realDownloads]
+    () => groupBy(qualityFiltered, (d) => d.service_name as string),
+    [qualityFiltered]
   );
   const downloadServices = Object.keys(downloadsByService);
   useEffect(() => {
@@ -202,7 +210,7 @@ export default function Watch() {
 
   return (
     <Layout>
-      <div className="pt-14">
+      <div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -251,6 +259,12 @@ export default function Watch() {
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
+              <ShareButton
+                variant="icon"
+                title={`${getDisplayTitle(anime)} — Episode ${currentEp}`}
+                text={`Watch ${getDisplayTitle(anime)} Episode ${currentEp} on AnimeStream`}
+                className="p-1.5"
+              />
               <button
                 onClick={() => currentEp > 1 && updateEp(currentEp - 1)}
                 disabled={currentEp <= 1}
@@ -334,7 +348,6 @@ export default function Watch() {
           <div className="flex items-center justify-between mb-3 gap-2">
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
-              <span className="text-[10px] font-normal text-muted-foreground">(shortened)</span>
             </h2>
             {realDownloads.length > 0 && (
               <span className="text-[11px] sm:text-xs text-muted-foreground">
@@ -345,12 +358,31 @@ export default function Watch() {
 
           {downloadsLoading ? (
             <div className="text-xs text-muted-foreground">Loading download links…</div>
-          ) : downloadServices.length === 0 ? (
+          ) : realDownloads.length === 0 ? (
             <div className="text-xs text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-3.5 w-3.5" /> No download links available yet for this episode.
             </div>
           ) : (
             <>
+              {/* Quality tabs */}
+              {qualityKeys.length > 1 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {["all", ...qualityKeys].map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setActiveQuality(q)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                        activeQuality === q
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {q === "all" ? "All Quality" : q.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Service tabs */}
               <div className="flex flex-wrap gap-2 mb-3 border-b border-border pb-3">
                 {downloadServices.map((svc) => (
@@ -363,7 +395,7 @@ export default function Watch() {
                         : "bg-secondary border-border text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {shortLabel(svc)}
+                    {label(svc)}
                     <span className="ml-1.5 opacity-70">({downloadsByService[svc].length})</span>
                   </button>
                 ))}
@@ -381,11 +413,8 @@ export default function Watch() {
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold truncate">{label(d.service_name)}</div>
-                      <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                        <span>{d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}</span>
-                        <span className="rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[9px] font-semibold uppercase">
-                          via {shortLabel(detectShortener(d.service_url) || "")}
-                        </span>
+                      <div className="text-[11px] text-muted-foreground">
+                        {d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
@@ -393,7 +422,14 @@ export default function Watch() {
                 ))}
               </div>
               <p className="mt-3 text-[11px] text-muted-foreground">
-                Links open on third-party hosts. We don't host or control these files.
+                Links open on third-party hosts. We don't host or control these files. See the full{" "}
+                <Link
+                  to={`/download?id=${animeId}&ep=${currentEp}&title=${encodeURIComponent(getDisplayTitle(anime))}`}
+                  className="text-primary hover:underline"
+                >
+                  download hub
+                </Link>
+                .
               </p>
             </>
           )}
@@ -523,6 +559,9 @@ export default function Watch() {
 
         {/* Characters & VAs (paginated) */}
         <AnimeCharacters animeId={animeId} compact />
+
+        {/* Related: sequels, prequels, OVA, ONA, specials */}
+        <RelatedAnime animeId={animeId} />
 
         <AnimeComments animeId={animeId} />
 

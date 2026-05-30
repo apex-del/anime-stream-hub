@@ -35,6 +35,7 @@ import AnimeStats from "@/components/AnimeStats";
 import RelatedAnime from "@/components/RelatedAnime";
 import AnimeComments from "@/components/AnimeComments";
 import AnimeStatusFlag from "@/components/AnimeStatusFlag";
+import ShareButton from "@/components/ShareButton";
 
 export default function AnimeDetails() {
   const { id } = useParams<{ id: string }>();
@@ -180,6 +181,11 @@ export default function AnimeDetails() {
                       />
                     </button>
                   )}
+                  <ShareButton
+                    variant="icon"
+                    title={getDisplayTitle(anime)}
+                    text={`Check out ${getDisplayTitle(anime)} on AnimeStream`}
+                  />
                 </div>
               </div>
             </div>

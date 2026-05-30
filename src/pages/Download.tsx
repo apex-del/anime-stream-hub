@@ -3,6 +3,7 @@ import { ArrowLeft, Shield, AlertTriangle, ExternalLink, Download as DownloadIco
 import { motion } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import Layout from "@/components/Layout";
+import ShareButton from "@/components/ShareButton";
 import { useEpisodeDownloads } from "@/hooks/useStreams";
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -11,29 +12,14 @@ const SERVICE_LABELS: Record<string, string> = {
   gofile: "GoFile",
   mixdrop: "MixDrop",
   telegram: "Telegram",
-  tg_cc: "Telegram (CC)",
+  tg_cc: "Telegram (Backup)",
   pixeldrain: "PixelDrain",
   ddownload: "DDownload",
   anonfiles: "AnonFiles",
   vidara: "Vidara",
-  cuty: "Cuty.io",
-  gplinks: "GPLinks",
 };
 const label = (s: string) =>
   SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
-// Shortener domains we recognise inside the URL string
-const SHORTENERS = [
-  { key: "cuty", label: "Cuty.io", patterns: ["cuty.io", "cuty.exe", "cuty."] },
-  { key: "gplinks", label: "GPLinks", patterns: ["gplinks.in", "gplinks.co", "gplinks."] },
-  { key: "upfiles", label: "UpFiles", patterns: ["upfiles.com", "upfiles."] },
-];
-
-function detectShortener(url: string): string | null {
-  const u = (url || "").toLowerCase();
-  for (const s of SHORTENERS) if (s.patterns.some((p) => u.includes(p))) return s.key;
-  return null;
-}
 
 const normQuality = (q?: string) => (q || "all").toLowerCase().replace(/\s+/g, "");
 
@@ -45,36 +31,32 @@ export default function DownloadPage() {
 
   const { data: downloads = [], isLoading } = useEpisodeDownloads(animeId, episode);
 
-  // Only shortened links (cuty / gplinks / upfiles) — no direct/embed links
-  const shortLinks = useMemo(
-    () =>
-      downloads.filter(
-        (d: any) => (d.link_type ?? "download") !== "embed" && detectShortener(d.service_url) !== null
-      ),
+  // Real download links — everything that's not a pure-embed (streaming) link
+  const dlLinks = useMemo(
+    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
     [downloads]
   );
 
-  // Service (shortener) tabs
-  const shortenerKeys = useMemo(() => {
+  // Service tabs (actual hosts present in the DB)
+  const serviceKeys = useMemo(() => {
     const set = new Set<string>();
-    shortLinks.forEach((d) => {
-      const k = detectShortener(d.service_url);
-      if (k) set.add(k);
-    });
-    return Array.from(set);
-  }, [shortLinks]);
+    dlLinks.forEach((d) => set.add(d.service_name));
+    return Array.from(set).sort();
+  }, [dlLinks]);
 
   const serviceTabs = useMemo(
-    () => [{ key: "all", label: "All Services" }, ...shortenerKeys.map((k) => ({ key: k, label: SHORTENERS.find((s) => s.key === k)?.label ?? k }))],
-    [shortenerKeys]
+    () => [{ key: "all", label: "All Services" }, ...serviceKeys.map((k) => ({ key: k, label: label(k) }))],
+    [serviceKeys]
   );
 
   // Quality tabs
   const qualityKeys = useMemo(() => {
     const set = new Set<string>();
-    shortLinks.forEach((d) => set.add(normQuality(d.quality)));
-    return Array.from(set).sort((a, b) => (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true }));
-  }, [shortLinks]);
+    dlLinks.forEach((d) => set.add(normQuality(d.quality)));
+    return Array.from(set).sort((a, b) =>
+      (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true })
+    );
+  }, [dlLinks]);
 
   const qualityTabs = useMemo(
     () => [{ key: "all", label: "All Quality" }, ...qualityKeys.map((k) => ({ key: k, label: k.toUpperCase() }))],
@@ -92,25 +74,31 @@ export default function DownloadPage() {
   }, [qualityTabs, activeQuality]);
 
   const visibleLinks = useMemo(() => {
-    return shortLinks.filter((d) => {
-      const matchService = activeService === "all" || detectShortener(d.service_url) === activeService;
+    return dlLinks.filter((d) => {
+      const matchService = activeService === "all" || d.service_name === activeService;
       const matchQuality = activeQuality === "all" || normQuality(d.quality) === activeQuality;
       return matchService && matchQuality;
     });
-  }, [shortLinks, activeService, activeQuality]);
+  }, [dlLinks, activeService, activeQuality]);
 
   const searchQuery = `${title} Episode ${episode} download`;
 
   return (
     <Layout>
       <div className="container mx-auto px-4 pt-20 pb-12 max-w-5xl">
-        <Link
-          to={animeId ? `/anime/${animeId}` : "/"}
-          className="inline-flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Anime
-        </Link>
+        <div className="flex items-center justify-between gap-2 mb-6">
+          <Link
+            to={animeId ? `/anime/${animeId}` : "/"}
+            className="inline-flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Anime
+          </Link>
+          <ShareButton
+            title={`${title} — Episode ${episode} download`}
+            text={`Download ${title} Episode ${episode} on AnimeStream`}
+          />
+        </div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <h1 className="text-2xl md:text-3xl font-extrabold mb-2">
@@ -134,7 +122,7 @@ export default function DownloadPage() {
         </div>
 
         {/* Filters */}
-        {!isLoading && shortLinks.length > 0 && (
+        {!isLoading && dlLinks.length > 0 && (
           <div className="space-y-3 mb-5">
             {/* Quality tabs */}
             {qualityTabs.length > 1 && (
@@ -142,7 +130,7 @@ export default function DownloadPage() {
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Quality</p>
                 <div className="flex flex-wrap gap-2">
                   {qualityTabs.map((t) => {
-                    const count = t.key === "all" ? shortLinks.length : shortLinks.filter((d) => normQuality(d.quality) === t.key).length;
+                    const count = t.key === "all" ? dlLinks.length : dlLinks.filter((d) => normQuality(d.quality) === t.key).length;
                     return (
                       <button
                         key={t.key}
@@ -159,13 +147,13 @@ export default function DownloadPage() {
               </div>
             )}
 
-            {/* Shortener service tabs */}
+            {/* Service tabs */}
             {serviceTabs.length > 1 && (
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Shortener Service</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Service</p>
                 <div className="flex flex-wrap gap-2">
                   {serviceTabs.map((t) => {
-                    const count = t.key === "all" ? shortLinks.length : shortLinks.filter((d) => detectShortener(d.service_url) === t.key).length;
+                    const count = t.key === "all" ? dlLinks.length : dlLinks.filter((d) => d.service_name === t.key).length;
                     return (
                       <button
                         key={t.key}
@@ -192,7 +180,7 @@ export default function DownloadPage() {
         ) : visibleLinks.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground mb-3">
-              No shortened download links {shortLinks.length > 0 ? "match this filter" : `yet for Episode ${episode}`}. Try a Google search:
+              No download links {dlLinks.length > 0 ? "match this filter" : `yet for Episode ${episode}`}. Try a Google search:
             </p>
             <a
               href={`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`}
@@ -206,37 +194,29 @@ export default function DownloadPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visibleLinks.map((d, i) => {
-              const short = detectShortener(d.service_url);
-              return (
-                <motion.a
-                  key={d.id}
-                  href={d.service_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:bg-surface-hover transition-all"
-                >
-                  <div className="min-w-0">
-                    <div className="text-sm font-bold truncate group-hover:text-primary">
-                      {label(d.service_name)}
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                      <span className="uppercase">{d.quality || "all"}</span>
-                      {d.category && <span>· {d.category.toUpperCase()}</span>}
-                      {short && (
-                        <span className="rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[9px] font-semibold uppercase">
-                          via {SHORTENERS.find((s) => s.key === short)?.label}
-                        </span>
-                      )}
-                    </div>
+            {visibleLinks.map((d, i) => (
+              <motion.a
+                key={d.id}
+                href={d.service_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.02 }}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:bg-surface-hover transition-all"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-bold truncate group-hover:text-primary">
+                    {label(d.service_name)}
                   </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
-                </motion.a>
-              );
-            })}
+                  <div className="mt-0.5 text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                    <span className="uppercase">{d.quality || "all"}</span>
+                    {d.category && <span>· {d.category.toUpperCase()}</span>}
+                  </div>
+                </div>
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
+              </motion.a>
+            ))}
           </div>
         )}
       </div>
