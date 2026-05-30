@@ -560,6 +560,9 @@ export default function Watch() {
         {/* Characters & VAs (paginated) */}
         <AnimeCharacters animeId={animeId} compact />
 
+        {/* Related: sequels, prequels, OVA, ONA, specials */}
+        <RelatedAnime animeId={animeId} />
+
         <AnimeComments animeId={animeId} />
 
         {recommendations.length > 0 && (
