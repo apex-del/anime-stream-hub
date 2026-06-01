@@ -8,6 +8,8 @@ import AnimeComments from "@/components/AnimeComments";
 import AnimeCharacters from "@/components/AnimeCharacters";
 import RelatedAnime from "@/components/RelatedAnime";
 import ShareButton from "@/components/ShareButton";
+import ShortLinks from "@/components/ShortLinks";
+import PopularLeaderboard from "@/components/PopularLeaderboard";
 import {
   useAnimeById,
   useAnimeEpisodes,
@@ -16,7 +18,7 @@ import {
 import { getDisplayTitle } from "@/lib/jikan";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useAuth } from "@/hooks/useAuth";
-import { useEpisodeStreams, useEpisodeDownloads } from "@/hooks/useStreams";
+import { useEpisodeStreams } from "@/hooks/useStreams";
 
 type AudioType = "sub" | "dub";
 
