@@ -107,6 +107,7 @@ export default function Watch() {
     }
   }, [filteredStreams, activeServerId]);
 
+  const activeStream = filteredStreams.find((s) => s.id === activeServerId);
   // Fallback YouTube search if no real stream
   const fallbackEmbed = useMemo(() => {
     if (!slug) return DEMO_VIDEO;
@@ -167,7 +168,8 @@ export default function Watch() {
     );
   }
 
-  const activeDownloads = activeDownloadTab ? downloadsByService[activeDownloadTab] || [] : [];
+
+
 
   return (
     <Layout>
