@@ -107,46 +107,6 @@ export default function Watch() {
     }
   }, [filteredStreams, activeServerId]);
 
-  // Real download links (everything that's not pure-embed), sorted by service
-  const realDownloads = useMemo(
-    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
-    [downloads]
-  );
-
-  // Quality filter
-  const qualityKeys = useMemo(() => {
-    const set = new Set<string>();
-    realDownloads.forEach((d) => set.add((d.quality || "all").toLowerCase()));
-    return Array.from(set).sort((a, b) =>
-      (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true })
-    );
-  }, [realDownloads]);
-  const [activeQuality, setActiveQuality] = useState("all");
-  useEffect(() => {
-    if (activeQuality !== "all" && !qualityKeys.includes(activeQuality)) setActiveQuality("all");
-  }, [qualityKeys, activeQuality]);
-
-  const qualityFiltered = useMemo(
-    () =>
-      realDownloads.filter(
-        (d) => activeQuality === "all" || (d.quality || "all").toLowerCase() === activeQuality
-      ),
-    [realDownloads, activeQuality]
-  );
-
-  // Group downloads by service & set default tab
-  const downloadsByService = useMemo(
-    () => groupBy(qualityFiltered, (d) => d.service_name as string),
-    [qualityFiltered]
-  );
-  const downloadServices = Object.keys(downloadsByService);
-  useEffect(() => {
-    if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
-      setActiveDownloadTab(downloadServices[0]);
-    }
-  }, [downloadServices, activeDownloadTab]);
-
-  const activeStream = filteredStreams.find((s) => s.id === activeServerId);
   // Fallback YouTube search if no real stream
   const fallbackEmbed = useMemo(() => {
     if (!slug) return DEMO_VIDEO;
