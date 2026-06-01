@@ -79,7 +79,6 @@ export default function Watch() {
   const { data: episodesData } = useAnimeEpisodes(animeId, 1);
   const { data: recsData } = useAnimeRecommendations(animeId);
   const { data: streams = [], isLoading: streamsLoading } = useEpisodeStreams(animeId, currentEp);
-  const { data: downloads = [], isLoading: downloadsLoading } = useEpisodeDownloads(animeId, currentEp);
 
   const anime = animeData?.data;
   const episodes = episodesData?.data || [];
