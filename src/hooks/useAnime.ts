@@ -54,8 +54,8 @@ export function useAnimeById(id: number) {
 
 export function useAnimeEpisodes(id: number, page = 1) {
   return useQuery({
-    queryKey: ["anime-episodes", id, page],
-    queryFn: () => getAnimeEpisodes(id, page),
+    queryKey: ["anime-episodes-trio", id, page],
+    queryFn: () => getEpisodesTrio(id, page),
     staleTime: 10 * 60 * 1000,
     enabled: !!id,
   });
@@ -63,8 +63,8 @@ export function useAnimeEpisodes(id: number, page = 1) {
 
 export function useAnimeRecommendations(id: number) {
   return useQuery({
-    queryKey: ["anime-recommendations", id],
-    queryFn: () => getAnimeRecommendations(id),
+    queryKey: ["anime-recommendations-trio", id],
+    queryFn: () => getRecommendationsTrio(id),
     staleTime: 10 * 60 * 1000,
     enabled: !!id,
   });
