@@ -4,10 +4,9 @@ import {
   getSeasonNow,
   searchAnime,
   getAnimeById,
-  getAnimeEpisodes,
-  getAnimeRecommendations,
   getGenres,
 } from "@/lib/jikan";
+import { getEpisodesTrio, getRecommendationsTrio } from "@/lib/animeData";
 
 export function useTopAnime(
   filter: "airing" | "upcoming" | "bypopularity" | "favorite" | "" = "",
