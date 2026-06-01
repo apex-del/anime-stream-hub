@@ -64,7 +64,7 @@ export default function Watch() {
   const [currentEp, setCurrentEp] = useState(initialEp);
   const [audio, setAudio] = useState<AudioType>("sub");
   const [activeServerId, setActiveServerId] = useState<string | null>(null);
-  const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
+  
   const [epPage, setEpPage] = useState(1);
 
   const { data: animeData, isLoading } = useAnimeById(animeId);
