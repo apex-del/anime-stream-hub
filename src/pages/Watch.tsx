@@ -343,96 +343,23 @@ export default function Watch() {
           </div>
         </div>
 
-        {/* Downloads */}
+        {/* Downloads (shortened links: Cuty / Exe / GPLinks) */}
         <section className="rounded-xl bg-card border border-border p-3 sm:p-4">
           <div className="flex items-center justify-between mb-3 gap-2">
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
             </h2>
-            {realDownloads.length > 0 && (
-              <span className="text-[11px] sm:text-xs text-muted-foreground">
-                {realDownloads.length} link{realDownloads.length === 1 ? "" : "s"}
-              </span>
-            )}
+            <Link
+              to={`/download?id=${animeId}&ep=${currentEp}&title=${encodeURIComponent(getDisplayTitle(anime))}`}
+              className="text-[11px] sm:text-xs text-primary hover:underline whitespace-nowrap"
+            >
+              Full download hub →
+            </Link>
           </div>
-
-          {downloadsLoading ? (
-            <div className="text-xs text-muted-foreground">Loading download links…</div>
-          ) : realDownloads.length === 0 ? (
-            <div className="text-xs text-muted-foreground flex items-center gap-2">
-              <AlertCircle className="h-3.5 w-3.5" /> No download links available yet for this episode.
-            </div>
-          ) : (
-            <>
-              {/* Quality tabs */}
-              {qualityKeys.length > 1 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {["all", ...qualityKeys].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setActiveQuality(q)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                        activeQuality === q
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {q === "all" ? "All Quality" : q.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Service tabs */}
-              <div className="flex flex-wrap gap-2 mb-3 border-b border-border pb-3">
-                {downloadServices.map((svc) => (
-                  <button
-                    key={svc}
-                    onClick={() => setActiveDownloadTab(svc)}
-                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border ${
-                      activeDownloadTab === svc
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {label(svc)}
-                    <span className="ml-1.5 opacity-70">({downloadsByService[svc].length})</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Links for active service */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {activeDownloads.map((d) => (
-                  <a
-                    key={d.id}
-                    href={d.service_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 hover:bg-surface-hover hover:border-primary/40 transition-all group"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold truncate">{label(d.service_name)}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
-                  </a>
-                ))}
-              </div>
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                Links open on third-party hosts. We don't host or control these files. See the full{" "}
-                <Link
-                  to={`/download?id=${animeId}&ep=${currentEp}&title=${encodeURIComponent(getDisplayTitle(anime))}`}
-                  className="text-primary hover:underline"
-                >
-                  download hub
-                </Link>
-                .
-              </p>
-            </>
-          )}
+          <ShortLinks malId={animeId} episode={currentEp} compact />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Links open on third-party shortener pages. We don't host or control these files.
+          </p>
         </section>
 
         {/* Episode List */}
