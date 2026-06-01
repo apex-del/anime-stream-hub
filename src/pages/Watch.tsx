@@ -82,7 +82,7 @@ export default function Watch() {
   const anime = animeData?.data;
   const episodes = episodesData?.data || [];
   const totalEps = anime?.episodes || episodes.length || 12;
-  const recommendations = recsData?.data?.slice(0, 12) || [];
+  const recommendations = recsData?.slice(0, 12) || [];
   const slug = useMemo(() => (anime ? slugify(anime.title) : ""), [anime]);
 
   // Filter streams by selected audio
