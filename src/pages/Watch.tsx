@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, ExternalLink, AlertCircle } from "lucide-react";
+import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
 import AnimeCharacters from "@/components/AnimeCharacters";
 import RelatedAnime from "@/components/RelatedAnime";
 import ShareButton from "@/components/ShareButton";
+import ShortLinks from "@/components/ShortLinks";
+import PopularLeaderboard from "@/components/PopularLeaderboard";
 import {
   useAnimeById,
   useAnimeEpisodes,
@@ -16,7 +18,7 @@ import {
 import { getDisplayTitle } from "@/lib/jikan";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useAuth } from "@/hooks/useAuth";
-import { useEpisodeStreams, useEpisodeDownloads } from "@/hooks/useStreams";
+import { useEpisodeStreams } from "@/hooks/useStreams";
 
 type AudioType = "sub" | "dub";
 
@@ -33,14 +35,6 @@ function slugify(title: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-// Group downloads by service for tab switching
-function groupBy<T, K extends string>(arr: T[], key: (x: T) => K): Record<K, T[]> {
-  return arr.reduce((acc, item) => {
-    const k = key(item);
-    (acc[k] ||= []).push(item);
-    return acc;
-  }, {} as Record<K, T[]>);
-}
 
 const SERVICE_LABELS: Record<string, string> = {
   upfiles: "UpFiles",
@@ -70,19 +64,18 @@ export default function Watch() {
   const [currentEp, setCurrentEp] = useState(initialEp);
   const [audio, setAudio] = useState<AudioType>("sub");
   const [activeServerId, setActiveServerId] = useState<string | null>(null);
-  const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
+  
   const [epPage, setEpPage] = useState(1);
 
   const { data: animeData, isLoading } = useAnimeById(animeId);
   const { data: episodesData } = useAnimeEpisodes(animeId, 1);
   const { data: recsData } = useAnimeRecommendations(animeId);
   const { data: streams = [], isLoading: streamsLoading } = useEpisodeStreams(animeId, currentEp);
-  const { data: downloads = [], isLoading: downloadsLoading } = useEpisodeDownloads(animeId, currentEp);
 
   const anime = animeData?.data;
   const episodes = episodesData?.data || [];
   const totalEps = anime?.episodes || episodes.length || 12;
-  const recommendations = recsData?.data?.slice(0, 12) || [];
+  const recommendations = recsData?.slice(0, 12) || [];
   const slug = useMemo(() => (anime ? slugify(anime.title) : ""), [anime]);
 
   // Filter streams by selected audio
@@ -105,45 +98,6 @@ export default function Watch() {
       setActiveServerId(null);
     }
   }, [filteredStreams, activeServerId]);
-
-  // Real download links (everything that's not pure-embed), sorted by service
-  const realDownloads = useMemo(
-    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
-    [downloads]
-  );
-
-  // Quality filter
-  const qualityKeys = useMemo(() => {
-    const set = new Set<string>();
-    realDownloads.forEach((d) => set.add((d.quality || "all").toLowerCase()));
-    return Array.from(set).sort((a, b) =>
-      (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true })
-    );
-  }, [realDownloads]);
-  const [activeQuality, setActiveQuality] = useState("all");
-  useEffect(() => {
-    if (activeQuality !== "all" && !qualityKeys.includes(activeQuality)) setActiveQuality("all");
-  }, [qualityKeys, activeQuality]);
-
-  const qualityFiltered = useMemo(
-    () =>
-      realDownloads.filter(
-        (d) => activeQuality === "all" || (d.quality || "all").toLowerCase() === activeQuality
-      ),
-    [realDownloads, activeQuality]
-  );
-
-  // Group downloads by service & set default tab
-  const downloadsByService = useMemo(
-    () => groupBy(qualityFiltered, (d) => d.service_name as string),
-    [qualityFiltered]
-  );
-  const downloadServices = Object.keys(downloadsByService);
-  useEffect(() => {
-    if (downloadServices.length > 0 && !downloadServices.includes(activeDownloadTab || "")) {
-      setActiveDownloadTab(downloadServices[0]);
-    }
-  }, [downloadServices, activeDownloadTab]);
 
   const activeStream = filteredStreams.find((s) => s.id === activeServerId);
   // Fallback YouTube search if no real stream
@@ -206,7 +160,8 @@ export default function Watch() {
     );
   }
 
-  const activeDownloads = activeDownloadTab ? downloadsByService[activeDownloadTab] || [] : [];
+
+
 
   return (
     <Layout>
@@ -343,96 +298,23 @@ export default function Watch() {
           </div>
         </div>
 
-        {/* Downloads */}
+        {/* Downloads (shortened links: Cuty / Exe / GPLinks) */}
         <section className="rounded-xl bg-card border border-border p-3 sm:p-4">
           <div className="flex items-center justify-between mb-3 gap-2">
             <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Download className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Download Episode {currentEp}
             </h2>
-            {realDownloads.length > 0 && (
-              <span className="text-[11px] sm:text-xs text-muted-foreground">
-                {realDownloads.length} link{realDownloads.length === 1 ? "" : "s"}
-              </span>
-            )}
+            <Link
+              to={`/download?id=${animeId}&ep=${currentEp}&title=${encodeURIComponent(getDisplayTitle(anime))}`}
+              className="text-[11px] sm:text-xs text-primary hover:underline whitespace-nowrap"
+            >
+              Full download hub →
+            </Link>
           </div>
-
-          {downloadsLoading ? (
-            <div className="text-xs text-muted-foreground">Loading download links…</div>
-          ) : realDownloads.length === 0 ? (
-            <div className="text-xs text-muted-foreground flex items-center gap-2">
-              <AlertCircle className="h-3.5 w-3.5" /> No download links available yet for this episode.
-            </div>
-          ) : (
-            <>
-              {/* Quality tabs */}
-              {qualityKeys.length > 1 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {["all", ...qualityKeys].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setActiveQuality(q)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                        activeQuality === q
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {q === "all" ? "All Quality" : q.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Service tabs */}
-              <div className="flex flex-wrap gap-2 mb-3 border-b border-border pb-3">
-                {downloadServices.map((svc) => (
-                  <button
-                    key={svc}
-                    onClick={() => setActiveDownloadTab(svc)}
-                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border ${
-                      activeDownloadTab === svc
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {label(svc)}
-                    <span className="ml-1.5 opacity-70">({downloadsByService[svc].length})</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Links for active service */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {activeDownloads.map((d) => (
-                  <a
-                    key={d.id}
-                    href={d.service_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 hover:bg-surface-hover hover:border-primary/40 transition-all group"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold truncate">{label(d.service_name)}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {d.quality?.toUpperCase()}{d.category ? ` · ${d.category.toUpperCase()}` : ""}
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
-                  </a>
-                ))}
-              </div>
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                Links open on third-party hosts. We don't host or control these files. See the full{" "}
-                <Link
-                  to={`/download?id=${animeId}&ep=${currentEp}&title=${encodeURIComponent(getDisplayTitle(anime))}`}
-                  className="text-primary hover:underline"
-                >
-                  download hub
-                </Link>
-                .
-              </p>
-            </>
-          )}
+          <ShortLinks malId={animeId} episode={currentEp} compact />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Links open on third-party shortener pages. We don't host or control these files.
+          </p>
         </section>
 
         {/* Episode List */}
@@ -562,6 +444,10 @@ export default function Watch() {
 
         {/* Related: sequels, prequels, OVA, ONA, specials */}
         <RelatedAnime animeId={animeId} />
+
+        {/* Most popular leaderboard */}
+        <PopularLeaderboard excludeId={animeId} />
+
 
         <AnimeComments animeId={animeId} />
 

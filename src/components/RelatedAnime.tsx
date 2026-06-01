@@ -1,30 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { GitBranch } from "lucide-react";
-
-interface Relation {
-  relation: string;
-  entry: Array<{ mal_id: number; type: string; name: string; url: string }>;
-}
+import { getRelationsTrio } from "@/lib/animeData";
 
 export default function RelatedAnime({ animeId }: { animeId: number }) {
-  const { data } = useQuery({
-    queryKey: ["anime-relations", animeId],
-    queryFn: async () => {
-      const res = await fetch(`https://api.jikan.moe/v4/anime/${animeId}/relations`);
-      if (!res.ok) throw new Error("Failed");
-      return res.json() as Promise<{ data: Relation[] }>;
-    },
+  const { data: groups = [] } = useQuery({
+    queryKey: ["anime-relations-trio", animeId],
+    queryFn: () => getRelationsTrio(animeId),
     staleTime: 10 * 60 * 1000,
     enabled: !!animeId,
   });
 
-  const relations = data?.data || [];
-  const animeRelations = relations.filter((r) =>
-    r.entry.some((e) => e.type === "anime")
-  );
-
-  if (animeRelations.length === 0) return null;
+  if (groups.length === 0) return null;
 
   return (
     <section className="mt-10">
@@ -32,21 +19,42 @@ export default function RelatedAnime({ animeId }: { animeId: number }) {
         <GitBranch className="h-5 w-5 text-primary" />
         Related Anime
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {animeRelations.map((rel, i) => (
-          <div key={i} className="rounded-xl bg-card border border-border p-4">
-            <span className="text-xs font-bold text-primary mb-2 block">{rel.relation}</span>
-            {rel.entry
-              .filter((e) => e.type === "anime")
-              .map((entry) => (
+      <div className="space-y-5">
+        {groups.map((g) => (
+          <div key={g.relation}>
+            <span className="text-xs font-bold text-primary mb-2 block uppercase tracking-wide">
+              {g.relation}
+            </span>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {g.entries.map((e) => (
                 <Link
-                  key={entry.mal_id}
-                  to={`/anime/${entry.mal_id}`}
-                  className="block text-sm text-foreground hover:text-primary transition-colors py-1"
+                  key={e.mal_id}
+                  to={`/anime/${e.mal_id}`}
+                  className="group rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 transition-colors"
                 >
-                  {entry.name}
+                  <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
+                    {e.image && (
+                      <img
+                        src={e.image}
+                        alt={e.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                    {e.format && (
+                      <span className="absolute top-1.5 right-1.5 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium text-foreground">
+                        {e.format}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-2">
+                    <p className="text-xs font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                      {e.title}
+                    </p>
+                  </div>
                 </Link>
               ))}
+            </div>
           </div>
         ))}
       </div>

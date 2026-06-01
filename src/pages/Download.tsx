@@ -1,10 +1,11 @@
 import { useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, Shield, AlertTriangle, ExternalLink, Download as DownloadIcon, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import Layout from "@/components/Layout";
 import ShareButton from "@/components/ShareButton";
-import { useEpisodeDownloads } from "@/hooks/useStreams";
+import ShortLinks from "@/components/ShortLinks";
+import { useEpisodeDownloads, useEpisodeShortLinks } from "@/hooks/useStreams";
 
 const SERVICE_LABELS: Record<string, string> = {
   upfiles: "UpFiles",
@@ -21,65 +22,21 @@ const SERVICE_LABELS: Record<string, string> = {
 const label = (s: string) =>
   SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const normQuality = (q?: string) => (q || "all").toLowerCase().replace(/\s+/g, "");
-
 export default function DownloadPage() {
   const [params] = useSearchParams();
   const title = params.get("title") || "Unknown Anime";
   const episode = Number(params.get("ep") || "1");
   const animeId = Number(params.get("id") || "0");
 
+  const { data: shortLinks = [] } = useEpisodeShortLinks(animeId, episode);
   const { data: downloads = [], isLoading } = useEpisodeDownloads(animeId, episode);
 
-  // Real download links — everything that's not a pure-embed (streaming) link
+  // Direct (unshortened) download links — used only as a fallback mirror
   const dlLinks = useMemo(
     () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
     [downloads]
   );
-
-  // Service tabs (actual hosts present in the DB)
-  const serviceKeys = useMemo(() => {
-    const set = new Set<string>();
-    dlLinks.forEach((d) => set.add(d.service_name));
-    return Array.from(set).sort();
-  }, [dlLinks]);
-
-  const serviceTabs = useMemo(
-    () => [{ key: "all", label: "All Services" }, ...serviceKeys.map((k) => ({ key: k, label: label(k) }))],
-    [serviceKeys]
-  );
-
-  // Quality tabs
-  const qualityKeys = useMemo(() => {
-    const set = new Set<string>();
-    dlLinks.forEach((d) => set.add(normQuality(d.quality)));
-    return Array.from(set).sort((a, b) =>
-      (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true })
-    );
-  }, [dlLinks]);
-
-  const qualityTabs = useMemo(
-    () => [{ key: "all", label: "All Quality" }, ...qualityKeys.map((k) => ({ key: k, label: k.toUpperCase() }))],
-    [qualityKeys]
-  );
-
-  const [activeService, setActiveService] = useState("all");
-  const [activeQuality, setActiveQuality] = useState("all");
-
-  useEffect(() => {
-    if (!serviceTabs.find((t) => t.key === activeService)) setActiveService("all");
-  }, [serviceTabs, activeService]);
-  useEffect(() => {
-    if (!qualityTabs.find((t) => t.key === activeQuality)) setActiveQuality("all");
-  }, [qualityTabs, activeQuality]);
-
-  const visibleLinks = useMemo(() => {
-    return dlLinks.filter((d) => {
-      const matchService = activeService === "all" || d.service_name === activeService;
-      const matchQuality = activeQuality === "all" || normQuality(d.quality) === activeQuality;
-      return matchService && matchQuality;
-    });
-  }, [dlLinks, activeService, activeQuality]);
+  const hasShort = shortLinks.some((l) => (l.link_type ?? "download") !== "embed");
 
   const searchQuery = `${title} Episode ${episode} download`;
 
@@ -115,72 +72,56 @@ export default function DownloadPage() {
             <div className="text-xs sm:text-sm text-muted-foreground space-y-1.5">
               <p className="font-bold text-destructive">Safety first</p>
               <p><Shield className="inline h-3.5 w-3.5 text-primary mr-1" />Use a <strong className="text-foreground">VPN</strong> and an <strong className="text-foreground">Ad Blocker</strong> on third-party hosts.</p>
-              <p><Shield className="inline h-3.5 w-3.5 text-primary mr-1" />Never download <strong className="text-foreground">.exe</strong> files — only .mkv / .mp4.</p>
-              <p><Shield className="inline h-3.5 w-3.5 text-primary mr-1" />We don't host or control these files.</p>
+              <p><Shield className="inline h-3.5 w-3.5 text-primary mr-1" />Shortener pages (Cuty / Exe / GPLinks) show ads — wait for the <strong className="text-foreground">Continue</strong> button.</p>
+              <p><Shield className="inline h-3.5 w-3.5 text-primary mr-1" />Never download <strong className="text-foreground">.exe</strong> files — only .mkv / .mp4. We don't host these files.</p>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
-        {!isLoading && dlLinks.length > 0 && (
-          <div className="space-y-3 mb-5">
-            {/* Quality tabs */}
-            {qualityTabs.length > 1 && (
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Quality</p>
-                <div className="flex flex-wrap gap-2">
-                  {qualityTabs.map((t) => {
-                    const count = t.key === "all" ? dlLinks.length : dlLinks.filter((d) => normQuality(d.quality) === t.key).length;
-                    return (
-                      <button
-                        key={t.key}
-                        onClick={() => setActiveQuality(t.key)}
-                        className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold border transition-all ${
-                          activeQuality === t.key ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {t.label}<span className="ml-1.5 opacity-70">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+        {/* Shortened links (primary) */}
+        <section className="rounded-xl border border-border bg-card p-4 sm:p-5 mb-6">
+          <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
+            <DownloadIcon className="h-4 w-4 text-primary" /> Download Links
+          </h2>
+          <ShortLinks malId={animeId} episode={episode} />
+        </section>
 
-            {/* Service tabs */}
-            {serviceTabs.length > 1 && (
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">Service</p>
-                <div className="flex flex-wrap gap-2">
-                  {serviceTabs.map((t) => {
-                    const count = t.key === "all" ? dlLinks.length : dlLinks.filter((d) => d.service_name === t.key).length;
-                    return (
-                      <button
-                        key={t.key}
-                        onClick={() => setActiveService(t.key)}
-                        className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold border transition-all ${
-                          activeService === t.key ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {t.label}<span className="ml-1.5 opacity-70">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Links */}
+        {/* Direct mirrors (fallback only) */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading download links…
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading mirrors…
           </div>
-        ) : visibleLinks.length === 0 ? (
+        ) : !hasShort && dlLinks.length > 0 ? (
+          <section className="rounded-xl border border-border bg-card p-4 sm:p-5">
+            <h2 className="text-sm font-bold mb-3 text-muted-foreground">Direct mirrors</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {dlLinks.map((d, i) => (
+                <motion.a
+                  key={d.id}
+                  href={d.service_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 p-4 hover:border-primary/40 hover:bg-surface-hover transition-all"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold truncate group-hover:text-primary">{label(d.service_name)}</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                      <span className="uppercase">{d.quality || "all"}</span>
+                      {d.category && <span>· {d.category.toUpperCase()}</span>}
+                    </div>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
+                </motion.a>
+              ))}
+            </div>
+          </section>
+        ) : !hasShort && dlLinks.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground mb-3">
-              No download links {dlLinks.length > 0 ? "match this filter" : `yet for Episode ${episode}`}. Try a Google search:
+              No download links yet for Episode {episode}. Try a Google search:
             </p>
             <a
               href={`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`}
@@ -192,33 +133,7 @@ export default function DownloadPage() {
               Search on Google
             </a>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visibleLinks.map((d, i) => (
-              <motion.a
-                key={d.id}
-                href={d.service_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-                className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:bg-surface-hover transition-all"
-              >
-                <div className="min-w-0">
-                  <div className="text-sm font-bold truncate group-hover:text-primary">
-                    {label(d.service_name)}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                    <span className="uppercase">{d.quality || "all"}</span>
-                    {d.category && <span>· {d.category.toUpperCase()}</span>}
-                  </div>
-                </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
-              </motion.a>
-            ))}
-          </div>
-        )}
+        ) : null}
       </div>
     </Layout>
   );
