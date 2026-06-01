@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, ExternalLink, AlertCircle } from "lucide-react";
+import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
@@ -35,14 +35,6 @@ function slugify(title: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-// Group downloads by service for tab switching
-function groupBy<T, K extends string>(arr: T[], key: (x: T) => K): Record<K, T[]> {
-  return arr.reduce((acc, item) => {
-    const k = key(item);
-    (acc[k] ||= []).push(item);
-    return acc;
-  }, {} as Record<K, T[]>);
-}
 
 const SERVICE_LABELS: Record<string, string> = {
   upfiles: "UpFiles",
