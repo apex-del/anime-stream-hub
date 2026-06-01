@@ -445,6 +445,10 @@ export default function Watch() {
         {/* Related: sequels, prequels, OVA, ONA, specials */}
         <RelatedAnime animeId={animeId} />
 
+        {/* Most popular leaderboard */}
+        <PopularLeaderboard excludeId={animeId} />
+
+
         <AnimeComments animeId={animeId} />
 
         {recommendations.length > 0 && (
