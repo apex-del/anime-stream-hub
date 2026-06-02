@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { ExternalLink, Link2, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
+import { ExternalLink, Link2, Loader2, AlertCircle, ShieldCheck, Server, Copy, Check } from "lucide-react";
 import { useEpisodeShortLinks } from "@/hooks/useStreams";
 import type { ShortLink } from "@/lib/externalDb";
 
@@ -13,8 +13,6 @@ const HOST_LABELS: Record<string, string> = {
   pixeldrain: "PixelDrain",
   ddownload: "DDownload",
   anonfiles: "AnonFiles",
-  abyss: "Abyss",
-  turboviplay: "TurboVid",
 };
 const hostLabel = (s: string) =>
   HOST_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -26,6 +24,9 @@ const SHORTENER_LABELS: Record<string, string> = {
 };
 const shortLabel = (s: string) => SHORTENER_LABELS[s] || s.replace(/\b\w/g, (c) => c.toUpperCase());
 
+// Streaming-only hosts — never shown in the download section.
+const STREAM_HOSTS = new Set(["abyss", "turboviplay", "turbovid", "vidara", "test"]);
+
 const normQuality = (q?: string) => (q || "all").toLowerCase().replace(/\s+/g, "");
 
 interface Props {
@@ -35,15 +36,22 @@ interface Props {
 }
 
 /**
- * Shortened (monetized) download links with switchable shortener
- * service tabs (Cuty / Exe / GPLinks) plus quality filtering.
+ * Shortened (monetized) DOWNLOAD links only — streaming hosts (Abyss,
+ * TurboVid, …) are excluded. Switchable shortener service tabs
+ * (Cuty / Exe / GPLinks), download-host tabs and quality filtering.
  */
 export default function ShortLinks({ malId, episode, compact }: Props) {
   const { data: links = [], isLoading } = useEpisodeShortLinks(malId, episode);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Only download-type shortened links (exclude pure embeds)
+  // Download-type links only: exclude pure embeds AND streaming hosts.
   const dlLinks = useMemo(
-    () => links.filter((l) => (l.link_type ?? "download") !== "embed"),
+    () =>
+      links.filter(
+        (l) =>
+          (l.link_type ?? "download") !== "embed" &&
+          !STREAM_HOSTS.has((l.service_name || "").toLowerCase())
+      ),
     [links]
   );
 
@@ -55,6 +63,7 @@ export default function ShortLinks({ malId, episode, compact }: Props) {
   }, [dlLinks]);
 
   const [activeShort, setActiveShort] = useState<string>("");
+  const [activeHost, setActiveHost] = useState("all");
   const [activeQuality, setActiveQuality] = useState("all");
 
   useEffect(() => {
@@ -68,22 +77,48 @@ export default function ShortLinks({ malId, episode, compact }: Props) {
     [dlLinks, activeShort]
   );
 
+  // Download-host tabs
+  const hostKeys = useMemo(() => {
+    const set = new Set<string>();
+    byShort.forEach((l) => set.add(l.service_name));
+    return Array.from(set).sort();
+  }, [byShort]);
+
+  useEffect(() => {
+    if (activeHost !== "all" && !hostKeys.includes(activeHost)) setActiveHost("all");
+  }, [hostKeys, activeHost]);
+
+  const byHost = useMemo(
+    () => byShort.filter((l) => activeHost === "all" || l.service_name === activeHost),
+    [byShort, activeHost]
+  );
+
   const qualityKeys = useMemo(() => {
     const set = new Set<string>();
-    byShort.forEach((l) => set.add(normQuality(l.quality)));
+    byHost.forEach((l) => set.add(normQuality(l.quality)));
     return Array.from(set).sort((a, b) =>
       (b.match(/\d+/)?.[0] ?? "0").localeCompare(a.match(/\d+/)?.[0] ?? "0", undefined, { numeric: true })
     );
-  }, [byShort]);
+  }, [byHost]);
 
   useEffect(() => {
     if (activeQuality !== "all" && !qualityKeys.includes(activeQuality)) setActiveQuality("all");
   }, [qualityKeys, activeQuality]);
 
   const visible = useMemo(
-    () => byShort.filter((l) => activeQuality === "all" || normQuality(l.quality) === activeQuality),
-    [byShort, activeQuality]
+    () => byHost.filter((l) => activeQuality === "all" || normQuality(l.quality) === activeQuality),
+    [byHost, activeQuality]
   );
+
+  const copy = async (l: ShortLink) => {
+    try {
+      await navigator.clipboard.writeText(l.short_url);
+      setCopiedId(l.id);
+      setTimeout(() => setCopiedId((c) => (c === l.id ? null : c)), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
 
   if (isLoading) {
     return (
@@ -129,6 +164,30 @@ export default function ShortLinks({ malId, episode, compact }: Props) {
         </div>
       </div>
 
+      {/* Download-host tabs */}
+      {hostKeys.length > 1 && (
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5 flex items-center gap-1.5">
+            <Server className="h-3.5 w-3.5" /> Host
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {["all", ...hostKeys].map((h) => (
+              <button
+                key={h}
+                onClick={() => setActiveHost(h)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                  activeHost === h
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {h === "all" ? "All hosts" : hostLabel(h)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quality tabs */}
       {qualityKeys.length > 1 && (
         <div>
@@ -156,14 +215,16 @@ export default function ShortLinks({ malId, episode, compact }: Props) {
       {/* Links */}
       <div className={`grid grid-cols-1 sm:grid-cols-2 ${compact ? "" : "lg:grid-cols-3"} gap-2.5`}>
         {visible.map((l: ShortLink) => (
-          <a
+          <div
             key={l.id}
-            href={l.short_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 p-3.5 hover:border-primary/40 hover:bg-surface-hover transition-all"
+            className="group flex items-center justify-between gap-2 rounded-xl border border-border bg-secondary/50 p-3.5 hover:border-primary/40 hover:bg-surface-hover transition-all"
           >
-            <div className="min-w-0">
+            <a
+              href={l.short_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 flex-1"
+            >
               <div className="text-sm font-bold truncate group-hover:text-primary">
                 {hostLabel(l.service_name)}
               </div>
@@ -174,9 +235,30 @@ export default function ShortLinks({ malId, episode, compact }: Props) {
                   <ShieldCheck className="h-3 w-3" /> via {shortLabel(l.short_service)}
                 </span>
               </div>
+            </a>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => copy(l)}
+                aria-label="Copy link"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-secondary transition-colors"
+              >
+                {copiedId === l.id ? (
+                  <Check className="h-4 w-4 text-primary" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </button>
+              <a
+                href={l.short_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open link"
+                className="p-1.5 rounded-lg text-muted-foreground group-hover:text-primary"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
-            <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
-          </a>
+          </div>
         ))}
       </div>
     </div>
