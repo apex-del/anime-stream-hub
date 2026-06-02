@@ -22,6 +22,9 @@ const SERVICE_LABELS: Record<string, string> = {
 const label = (s: string) =>
   SERVICE_LABELS[s] || s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+// Streaming-only hosts — never shown in the download section.
+const STREAM_HOSTS = new Set(["abyss", "turboviplay", "turbovid", "vidara", "test"]);
+
 export default function DownloadPage() {
   const [params] = useSearchParams();
   const title = params.get("title") || "Unknown Anime";
