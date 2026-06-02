@@ -382,7 +382,7 @@ export default function AnimeDetails() {
         </motion.section>
 
         {/* Trailer */}
-        <AnimeTrailer youtubeId={anime.trailer?.youtube_id} title={getDisplayTitle(anime)} />
+        <AnimeTrailer youtubeId={anime.trailer?.youtube_id} title={getDisplayTitle(anime)} malId={anime.mal_id} />
 
         {/* Characters */}
         <AnimeCharacters animeId={animeId} />
