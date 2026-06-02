@@ -83,6 +83,9 @@ export default function Home() {
           isLoading={popularLoading}
         />
 
+        <AnimeVibeBanner />
+
+
         <PosterGrid
           title="Top Rated"
           emoji="🏆"
