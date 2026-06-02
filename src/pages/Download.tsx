@@ -34,9 +34,15 @@ export default function DownloadPage() {
   const { data: shortLinks = [] } = useEpisodeShortLinks(animeId, episode);
   const { data: downloads = [], isLoading } = useEpisodeDownloads(animeId, episode);
 
-  // Direct (unshortened) download links — used only as a fallback mirror
+  // Direct (unshortened) download links — used only as a fallback mirror.
+  // Streaming hosts (abyss / turbovid / vidara) are excluded.
   const dlLinks = useMemo(
-    () => downloads.filter((d: any) => (d.link_type ?? "download") !== "embed"),
+    () =>
+      downloads.filter(
+        (d: any) =>
+          (d.link_type ?? "download") !== "embed" &&
+          !STREAM_HOSTS.has((d.service_name || "").toLowerCase())
+      ),
     [downloads]
   );
   const hasShort = shortLinks.some((l) => (l.link_type ?? "download") !== "embed");
