@@ -187,5 +187,33 @@ export async function getRelationsTrio(id: number): Promise<RelationGroup[]> {
   } catch {
     /* fall through */
   }
+
+  // Fallback: Jikan relations (no cover images — UI shows a placeholder)
+  try {
+    const res = await fetch(`https://api.jikan.moe/v4/anime/${id}/relations`);
+    if (res.ok) {
+      const json = (await res.json()) as {
+        data?: Array<{ relation: string; entry: Array<{ mal_id: number; type: string; name: string }> }>;
+      };
+      const groups: RelationGroup[] = [];
+      (json.data || []).forEach((rg) => {
+        const entries = rg.entry
+          .filter((e) => e.type === "anime")
+          .map((e) => ({
+            mal_id: e.mal_id,
+            title: e.name,
+            image: null,
+            type: "ANIME",
+            format: null,
+          }));
+        if (entries.length) groups.push({ relation: rg.relation, entries });
+      });
+      if (groups.length) return groups;
+    }
+  } catch {
+    /* fall through */
+  }
+
   return [];
 }
+
