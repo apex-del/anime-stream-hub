@@ -33,13 +33,17 @@ export default function RelatedAnime({ animeId }: { animeId: number }) {
                   className="group rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 transition-colors"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
-                    {e.image && (
+                    {e.image ? (
                       <img
                         src={e.image}
                         alt={e.title}
                         loading="lazy"
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 via-card to-secondary p-2">
+                        <GitBranch className="h-6 w-6 text-primary/40" />
+                      </div>
                     )}
                     {e.format && (
                       <span className="absolute top-1.5 right-1.5 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium text-foreground">
