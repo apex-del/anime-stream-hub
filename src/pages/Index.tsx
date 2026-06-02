@@ -4,6 +4,7 @@ import AnimeRow from "@/components/AnimeRow";
 import AnimeCard from "@/components/AnimeCard";
 import LeaderboardGrid from "@/components/LeaderboardGrid";
 import ContinueWatching from "@/components/ContinueWatching";
+import AnimeVibeBanner from "@/components/AnimeVibeBanner";
 import { useTopAnime, useSeasonNow } from "@/hooks/useAnime";
 import type { JikanAnime } from "@/lib/jikan";
 
