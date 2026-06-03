@@ -83,9 +83,6 @@ export default function Home() {
           isLoading={popularLoading}
         />
 
-        <AnimeVibeBanner />
-
-
         <PosterGrid
           title="Top Rated"
           emoji="🏆"
@@ -98,6 +95,8 @@ export default function Home() {
           animeList={favoriteData?.data || []}
           isLoading={favoriteLoading}
         />
+
+        <GenreTags />
       </div>
     </Layout>
   );
