@@ -126,6 +126,31 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Types */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Types</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {typeNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname + location.search === item.url}
+                    tooltip={item.title}
+                  >
+                    <NavLink to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+
+
         {/* User Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Library</SidebarGroupLabel>
