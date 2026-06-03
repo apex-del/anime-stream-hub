@@ -54,6 +54,7 @@ function AnimatedRoutes() {
           <Route path="/anime/:id" element={<AnimeDetails />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
