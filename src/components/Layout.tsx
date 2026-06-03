@@ -21,6 +21,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </div>
       <BottomNav />
+      <CookieConsent />
     </SidebarProvider>
   );
 }
