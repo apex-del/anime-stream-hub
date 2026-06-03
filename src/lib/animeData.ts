@@ -159,11 +159,17 @@ export interface RelationGroup {
 }
 
 export async function getRelationsTrio(id: number): Promise<RelationGroup[]> {
+  // Relation types that are NOT actual related anime (they group titles that
+  // merely share a character / source) — these confused users, so hide them.
+  const EXCLUDED = new Set(["character", "other"]);
   // AniList relations include cover images directly — preferred here.
   try {
     const media = await getAniListMedia(id);
     const edges = (media?.relations?.edges || []).filter(
-      (e) => e.node.type === "ANIME" && e.node.idMal
+      (e) =>
+        e.node.type === "ANIME" &&
+        e.node.idMal &&
+        !EXCLUDED.has((e.relationType || "").replace(/_/g, " ").toLowerCase())
     );
     if (edges.length) {
       const groups = new Map<string, RelationGroup>();
