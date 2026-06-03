@@ -108,12 +108,31 @@ export default function Browse() {
             className="mb-8"
           >
             <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
-              Browse Anime
+              {type ? TYPE_LABELS[type] || "Browse Anime" : "Browse Anime"}
             </h1>
             <p className="text-muted-foreground">
               Discover and download your favorite anime
             </p>
           </motion.div>
+
+          {/* Type pills */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {typeOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  setType(opt.value);
+                  setPage(1);
+                }}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+                  type === opt.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
 
           {/* Search Bar */}
           <div className="flex gap-3 mb-6">
