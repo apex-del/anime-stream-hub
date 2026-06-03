@@ -63,7 +63,17 @@ export async function fetchStreams(malId: number, episode?: number): Promise<Str
   if (episode != null) params.set("episode_number", `eq.${episode}`);
   const r = await fetch(`${EXT_URL}/rest/v1/streaming_urls?${params}`, { headers });
   if (!r.ok) return [];
-  return r.json();
+  const rows: StreamLink[] = await r.json();
+  // Drop rows that have no usable player URL (empty embed + service url),
+  // and de-duplicate identical URLs so the same server isn't listed twice.
+  const seen = new Set<string>();
+  return rows.filter((s) => {
+    const url = (s.embed_url || s.service_url || "").trim();
+    if (!url) return false;
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
 }
 
 export async function fetchDownloads(malId: number, episode?: number): Promise<DownloadLink[]> {

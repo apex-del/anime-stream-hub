@@ -4,7 +4,7 @@ import AnimeRow from "@/components/AnimeRow";
 import AnimeCard from "@/components/AnimeCard";
 import LeaderboardGrid from "@/components/LeaderboardGrid";
 import ContinueWatching from "@/components/ContinueWatching";
-import AnimeVibeBanner from "@/components/AnimeVibeBanner";
+import GenreTags from "@/components/GenreTags";
 import { useTopAnime, useSeasonNow } from "@/hooks/useAnime";
 import type { JikanAnime } from "@/lib/jikan";
 
@@ -83,9 +83,6 @@ export default function Home() {
           isLoading={popularLoading}
         />
 
-        <AnimeVibeBanner />
-
-
         <PosterGrid
           title="Top Rated"
           emoji="🏆"
@@ -98,6 +95,8 @@ export default function Home() {
           animeList={favoriteData?.data || []}
           isLoading={favoriteLoading}
         />
+
+        <GenreTags />
       </div>
     </Layout>
   );

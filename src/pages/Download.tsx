@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import Layout from "@/components/Layout";
 import ShareButton from "@/components/ShareButton";
 import ShortLinks from "@/components/ShortLinks";
+import PopularLeaderboard from "@/components/PopularLeaderboard";
 import { useEpisodeDownloads, useEpisodeShortLinks } from "@/hooks/useStreams";
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -143,6 +144,11 @@ export default function DownloadPage() {
             </a>
           </div>
         ) : null}
+
+        {/* Most popular leaderboard */}
+        <div className="mt-8">
+          <PopularLeaderboard variant="list" excludeId={animeId} />
+        </div>
       </div>
     </Layout>
   );

@@ -33,11 +33,12 @@ export function useSearchAnime(
   genres?: string,
   status?: string,
   orderBy?: string,
-  sort?: string
+  sort?: string,
+  type?: string
 ) {
   return useQuery({
-    queryKey: ["search-anime", query, page, genres, status, orderBy, sort],
-    queryFn: () => searchAnime(query, page, genres, status, orderBy, sort),
+    queryKey: ["search-anime", query, page, genres, status, orderBy, sort, type],
+    queryFn: () => searchAnime(query, page, genres, status, orderBy, sort, type),
     staleTime: 3 * 60 * 1000,
     enabled: true,
   });

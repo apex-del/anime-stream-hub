@@ -18,6 +18,12 @@ import {
   Award,
   Building2,
   User,
+  Tv,
+  Clapperboard,
+  Disc,
+  Radio,
+  Music,
+  Star,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -46,6 +52,15 @@ const mainNav = [
   { title: "Leaderboard", url: "/leaderboard", icon: Award },
   { title: "Schedule", url: "/schedule", icon: CalendarDays },
   { title: "Random", url: "/random", icon: Shuffle },
+];
+
+const typeNav = [
+  { title: "TV Series", url: "/browse?type=tv", icon: Tv },
+  { title: "Movies", url: "/browse?type=movie", icon: Clapperboard },
+  { title: "OVA", url: "/browse?type=ova", icon: Disc },
+  { title: "ONA", url: "/browse?type=ona", icon: Radio },
+  { title: "Specials", url: "/browse?type=special", icon: Star },
+  { title: "Music", url: "/browse?type=music", icon: Music },
 ];
 
 const userNav = [
@@ -110,6 +125,31 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Types */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Types</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {typeNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname + location.search === item.url}
+                    tooltip={item.title}
+                  >
+                    <NavLink to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+
 
         {/* User Navigation */}
         <SidebarGroup>

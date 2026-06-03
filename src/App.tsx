@@ -10,6 +10,7 @@ import Browse from "./pages/Browse";
 import AnimeDetails from "./pages/AnimeDetails";
 import Watch from "./pages/Watch";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Favorites from "./pages/Favorites";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -53,6 +54,7 @@ function AnimatedRoutes() {
           <Route path="/anime/:id" element={<AnimeDetails />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
