@@ -18,6 +18,12 @@ import {
   Award,
   Building2,
   User,
+  Tv,
+  Clapperboard,
+  Disc,
+  Radio,
+  Music,
+  Star,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
