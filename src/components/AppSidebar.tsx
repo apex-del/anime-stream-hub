@@ -54,6 +54,15 @@ const mainNav = [
   { title: "Random", url: "/random", icon: Shuffle },
 ];
 
+const typeNav = [
+  { title: "TV Series", url: "/browse?type=tv", icon: Tv },
+  { title: "Movies", url: "/browse?type=movie", icon: Clapperboard },
+  { title: "OVA", url: "/browse?type=ova", icon: Disc },
+  { title: "ONA", url: "/browse?type=ona", icon: Radio },
+  { title: "Specials", url: "/browse?type=special", icon: Star },
+  { title: "Music", url: "/browse?type=music", icon: Music },
+];
+
 const userNav = [
   { title: "Profile", url: "/profile", icon: User },
   { title: "Favorites", url: "/favorites", icon: Heart },
