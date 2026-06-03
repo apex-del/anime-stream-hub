@@ -23,15 +23,37 @@ const sortOptions = [
   { value: "popularity", label: "Popularity" },
 ];
 
+const typeOptions = [
+  { value: "", label: "All Types" },
+  { value: "tv", label: "TV" },
+  { value: "movie", label: "Movie" },
+  { value: "ova", label: "OVA" },
+  { value: "ona", label: "ONA" },
+  { value: "special", label: "Special" },
+  { value: "music", label: "Music" },
+];
+
+const TYPE_LABELS: Record<string, string> = {
+  tv: "TV Series",
+  movie: "Movies",
+  ova: "OVA",
+  ona: "ONA",
+  special: "Specials",
+  music: "Music",
+};
+
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
+  const initialType = searchParams.get("type") || "";
+  const initialGenre = searchParams.get("genre") || "";
 
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState(initialGenre);
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("");
+  const [type, setType] = useState(initialType);
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -42,7 +64,8 @@ export default function Browse() {
     selectedGenre,
     status,
     sort || undefined,
-    sort ? "desc" : undefined
+    sort ? "desc" : undefined,
+    type || undefined
   );
 
   // Debounce search
@@ -54,14 +77,21 @@ export default function Browse() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Sync URL
+  // Keep local state in sync when navigating via sidebar/footer links
   useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ q: debouncedQuery });
-    } else {
-      setSearchParams({});
-    }
-  }, [debouncedQuery, setSearchParams]);
+    setType(searchParams.get("type") || "");
+    setSelectedGenre(searchParams.get("genre") || "");
+    setPage(1);
+  }, [searchParams]);
+
+  // Sync URL (preserve type & genre)
+  useEffect(() => {
+    const next: Record<string, string> = {};
+    if (debouncedQuery) next.q = debouncedQuery;
+    if (type) next.type = type;
+    if (selectedGenre) next.genre = selectedGenre;
+    setSearchParams(next, { replace: true });
+  }, [debouncedQuery, type, selectedGenre, setSearchParams]);
 
   const genres = genresData?.data || [];
   const results = data?.data || [];
