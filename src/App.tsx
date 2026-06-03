@@ -10,6 +10,7 @@ import Browse from "./pages/Browse";
 import AnimeDetails from "./pages/AnimeDetails";
 import Watch from "./pages/Watch";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Favorites from "./pages/Favorites";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
