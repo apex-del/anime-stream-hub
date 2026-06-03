@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
+import CookieConsent from "./CookieConsent";
 
 interface LayoutProps {
   children: React.ReactNode;
