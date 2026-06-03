@@ -114,7 +114,8 @@ export async function searchAnime(
   genres?: string,
   status?: string,
   orderBy?: string,
-  sort?: string
+  sort?: string,
+  type?: string
 ): Promise<JikanResponse<JikanAnime[]>> {
   const params = new URLSearchParams({
     page: String(page),
@@ -126,6 +127,7 @@ export async function searchAnime(
   if (status) params.set("status", status);
   if (orderBy) params.set("order_by", orderBy);
   if (sort) params.set("sort", sort);
+  if (type) params.set("type", type);
   const res = await rateLimitedFetch(`${BASE_URL}/anime?${params}`);
   return res.json();
 }
