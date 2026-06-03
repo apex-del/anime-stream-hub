@@ -144,6 +144,11 @@ export default function DownloadPage() {
             </a>
           </div>
         ) : null}
+
+        {/* Most popular leaderboard */}
+        <div className="mt-8">
+          <PopularLeaderboard variant="list" excludeId={animeId} />
+        </div>
       </div>
     </Layout>
   );
