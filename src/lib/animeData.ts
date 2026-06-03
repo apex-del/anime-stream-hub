@@ -203,6 +203,7 @@ export async function getRelationsTrio(id: number): Promise<RelationGroup[]> {
       };
       const groups: RelationGroup[] = [];
       (json.data || []).forEach((rg) => {
+        if (EXCLUDED.has((rg.relation || "").toLowerCase())) return;
         const entries = rg.entry
           .filter((e) => e.type === "anime")
           .map((e) => ({
