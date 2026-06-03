@@ -133,6 +133,9 @@ export default function Browse() {
                 {opt.label}
               </button>
             ))}
+          </div>
+
+
 
           {/* Search Bar */}
           <div className="flex gap-3 mb-6">
