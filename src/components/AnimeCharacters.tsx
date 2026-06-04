@@ -103,7 +103,7 @@ export default function AnimeCharacters({ animeId, compact }: { animeId: number;
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {charItems.map((c) => (
-            <div key={c.character.mal_id} className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/30 transition-colors">
+            <Link key={c.character.mal_id} to={`/character/${c.character.mal_id}`} className="rounded-xl bg-card border border-border overflow-hidden group hover:border-primary/30 transition-colors">
               <div className="relative aspect-[3/4] overflow-hidden">
                 <img
                   src={c.character.images.webp?.image_url || c.character.images.jpg.image_url}
@@ -116,9 +116,9 @@ export default function AnimeCharacters({ animeId, compact }: { animeId: number;
                 </span>
               </div>
               <div className="p-2.5">
-                <p className="text-xs font-bold line-clamp-2">{c.character.name}</p>
+                <p className="text-xs font-bold line-clamp-2 group-hover:text-primary transition-colors">{c.character.name}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
