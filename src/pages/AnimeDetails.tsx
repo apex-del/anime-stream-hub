@@ -36,6 +36,7 @@ import RelatedAnime from "@/components/RelatedAnime";
 import AnimeComments from "@/components/AnimeComments";
 import AnimeStatusFlag from "@/components/AnimeStatusFlag";
 import ShareButton from "@/components/ShareButton";
+import PopularLeaderboard from "@/components/PopularLeaderboard";
 
 export default function AnimeDetails() {
   const { id } = useParams<{ id: string }>();
