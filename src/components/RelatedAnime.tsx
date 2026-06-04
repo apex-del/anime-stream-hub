@@ -41,8 +41,9 @@ export default function RelatedAnime({ animeId }: { animeId: number }) {
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 via-card to-secondary p-2">
-                        <GitBranch className="h-6 w-6 text-primary/40" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-secondary p-2 text-center">
+                        <ImageOff className="h-6 w-6 text-muted-foreground/50" />
+                        <span className="text-[9px] text-muted-foreground/70">No image</span>
                       </div>
                     )}
                     {e.format && (
