@@ -26,6 +26,8 @@ import Studios from "./pages/Studios";
 import Upcoming from "./pages/Upcoming";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import CharacterDetail from "./pages/CharacterDetail";
+import PersonDetail from "./pages/PersonDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -71,6 +73,8 @@ function AnimatedRoutes() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/character/:id" element={<CharacterDetail />} />
+          <Route path="/person/:id" element={<PersonDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
