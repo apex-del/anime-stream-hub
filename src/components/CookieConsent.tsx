@@ -34,9 +34,9 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 26 }}
-          className="fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-2xl"
+          className="fixed inset-x-0 bottom-16 md:bottom-4 z-50 px-3 flex justify-center pointer-events-none"
         >
-          <div className="rounded-2xl border border-border bg-card/95 backdrop-blur shadow-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full max-w-2xl pointer-events-auto rounded-2xl border border-border bg-card/95 backdrop-blur shadow-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <Cookie className="h-6 w-6 text-primary shrink-0" />
             <p className="text-xs sm:text-sm text-muted-foreground flex-1">
               We use cookies and your session to keep you signed in, remember your
