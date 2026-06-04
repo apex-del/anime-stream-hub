@@ -84,13 +84,14 @@ export default function Watch() {
     [streams, audio]
   );
 
-  // Auto-select preferred server (turbovid first) when streams change
+  // Auto-select preferred server: vidara first, then turbovid, then abyss.
   useEffect(() => {
     if (filteredStreams.length > 0) {
       if (!filteredStreams.find((s) => s.id === activeServerId)) {
         const preferred =
-          filteredStreams.find((s) => s.service_name === "turboviplay") ||
-          filteredStreams.find((s) => /turbo|vid/i.test(s.service_name)) ||
+          filteredStreams.find((s) => /vidara/i.test(s.service_name)) ||
+          filteredStreams.find((s) => /turbo/i.test(s.service_name)) ||
+          filteredStreams.find((s) => /abyss/i.test(s.service_name)) ||
           filteredStreams[0];
         setActiveServerId(preferred.id);
       }
