@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { GitBranch } from "lucide-react";
+import { GitBranch, ImageOff } from "lucide-react";
 import { getRelationsTrio } from "@/lib/animeData";
 
 export default function RelatedAnime({ animeId }: { animeId: number }) {
