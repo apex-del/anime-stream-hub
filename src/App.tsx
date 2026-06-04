@@ -73,6 +73,8 @@ function AnimatedRoutes() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/character/:id" element={<CharacterDetail />} />
+          <Route path="/person/:id" element={<PersonDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
