@@ -25,6 +25,7 @@ export interface DownloadLink {
   service_name: string;
   service_url: string;
   status: string;
+  link_type?: string;
 }
 
 // Shortened (monetized) links — cuty / exe / gplinks
