@@ -54,6 +54,7 @@ export interface ExtEpisode {
 }
 
 const EMBED_HOSTS = new Set(["vidara", "turbovid", "turboviplay", "abyss"]);
+const STREAM_PRIORITY: Record<string, number> = { vidara: 0, turbovid: 1, abyss: 2 };
 
 function normalizeServiceName(service: string) {
   const s = service.toLowerCase().trim();
@@ -105,7 +106,7 @@ export async function fetchStreams(malId: number, episode?: number): Promise<Str
     if (seen.has(url)) return false;
     seen.add(url);
     return true;
-  });
+  }).sort((a, b) => (STREAM_PRIORITY[a.service_name] ?? 99) - (STREAM_PRIORITY[b.service_name] ?? 99));
 }
 
 export async function fetchDownloads(malId: number, episode?: number): Promise<DownloadLink[]> {
