@@ -417,7 +417,7 @@ export default function AnimeDetails() {
 
         {/* Most popular leaderboard */}
         <div className="mt-12 pb-12">
-          <PopularLeaderboard variant="list" excludeId={animeId} />
+          <PopularLeaderboard variant="block" excludeId={animeId} />
         </div>
       </div>
     </Layout>
