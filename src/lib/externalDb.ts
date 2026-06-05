@@ -82,7 +82,12 @@ export async function fetchStreams(malId: number, episode?: number): Promise<Str
   ]);
   const rows: StreamLink[] = streamRes.ok ? await streamRes.json() : [];
   const uploadStreams: StreamLink[] = uploadRows
-    .filter((u) => EMBED_HOSTS.has(normalizeServiceName(u.service_name)))
+    .filter(
+      (u) =>
+        u.status === "completed" &&
+        (u.link_type ?? "both") !== "download" &&
+        EMBED_HOSTS.has(normalizeServiceName(u.service_name))
+    )
     .map((u) => ({
       id: `upload-${u.id}`,
       mal_id: u.mal_id,
