@@ -258,6 +258,10 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
     const isOwner = user?.id === comment.user_id;
     const edited = comment.updated_at && comment.updated_at !== comment.created_at;
 
+    const profile = commentProfiles[comment.user_id];
+    const avatarName = profile?.display_name || comment.display_name || "Anonymous";
+    const profileHref = profile?.public_profile === false ? null : `/profile/${comment.user_id}`;
+
     return (
       <motion.div
         key={comment.id}
@@ -268,12 +272,21 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold">
-              {(comment.display_name || "U")[0].toUpperCase()}
-            </div>
+            <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 border border-border">
+              <AvatarImage src={profile?.avatar_url ?? undefined} alt={avatarName} />
+              <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
+                {avatarName[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <div className="flex items-center flex-wrap gap-x-2">
-                <span className="text-xs sm:text-sm font-medium truncate">{comment.display_name || "Anonymous"}</span>
+                {profileHref ? (
+                  <Link to={profileHref} className="text-xs sm:text-sm font-medium truncate hover:text-primary transition-colors">
+                    {avatarName}
+                  </Link>
+                ) : (
+                  <span className="text-xs sm:text-sm font-medium truncate">{avatarName}</span>
+                )}
                 <span className="text-[10px] sm:text-xs text-muted-foreground">{timeAgo(comment.created_at)}</span>
                 {edited && <span className="text-[10px] text-muted-foreground italic">(edited)</span>}
               </div>
