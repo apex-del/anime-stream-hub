@@ -301,18 +301,10 @@ export default function Watch() {
           {activeStream && (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2">
               <p className="text-[11px] sm:text-xs text-muted-foreground">
-                If one player fails, switch server or open it directly.
+                If one player fails, switch server to Vidara, then TurboVid, then Abyss.
               </p>
               <div className="flex items-center gap-1.5">
                 <ReportButton animeId={animeId} animeTitle={getDisplayTitle(anime)} episodeNumber={currentEp} />
-                <a
-                  href={embedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" /> Open
-                </a>
               </div>
             </div>
           )}
