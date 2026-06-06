@@ -28,9 +28,12 @@ export function useProfile(userId?: string) {
         .eq("user_id", targetId)
         .maybeSingle();
       if (error) throw error;
-      return ((data
-        ? { ...data, public_profile: (data as any).public_profile ?? true }
-        : null) as Profile | null);
+      if (!data) return null;
+      const row = data as any;
+      return {
+        ...row,
+        public_profile: row.public_profile ?? true,
+      } as Profile;
     },
     enabled: !!targetId,
   });
