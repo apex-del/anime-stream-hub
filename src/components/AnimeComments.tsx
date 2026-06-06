@@ -122,7 +122,7 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
       if (userIds.length === 0) return {} as Record<string, CommentProfile>;
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url, public_profile")
+        .select("user_id, display_name, avatar_url")
         .in("user_id", userIds);
       if (error) throw error;
       return (data ?? []).reduce((acc, row: any) => {
@@ -130,7 +130,7 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
           user_id: row.user_id,
           display_name: row.display_name,
           avatar_url: row.avatar_url,
-          public_profile: row.public_profile ?? true,
+          public_profile: true,
         };
         return acc;
       }, {} as Record<string, CommentProfile>);
