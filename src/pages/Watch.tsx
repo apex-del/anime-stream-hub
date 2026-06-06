@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, AlertCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
