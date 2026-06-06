@@ -59,6 +59,21 @@ type SortMode = "newest" | "oldest" | "top";
 
 export default function AnimeComments({ animeId }: AnimeCommentsProps) {
   const { user } = useAuth();
+  const { data: ownProfile } = useQuery({
+    queryKey: ["comment-own-profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { avatar_url: string | null; display_name: string | null } | null;
+    },
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
