@@ -486,9 +486,12 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
       {user ? (
         <form onSubmit={handleSubmit} className="mb-6">
           <div className="flex gap-2 sm:gap-3">
-            <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold mt-0.5">
-              {user.email?.[0]?.toUpperCase() || "U"}
-            </div>
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 mt-0.5 border border-border">
+              <AvatarImage src={ownProfile?.avatar_url ?? undefined} alt={ownProfile?.display_name || "Your avatar"} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                {(ownProfile?.display_name?.[0] ?? user.email?.[0] ?? "U").toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 space-y-2 min-w-0">
               <textarea
                 value={content}
