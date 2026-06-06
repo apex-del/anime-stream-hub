@@ -41,6 +41,13 @@ interface Comment {
   parent_id: string | null;
 }
 
+interface CommentProfile {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  public_profile: boolean;
+}
+
 interface Reaction {
   id: string;
   comment_id: string;
