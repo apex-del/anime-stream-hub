@@ -32,7 +32,7 @@ export function useProfile(userId?: string) {
       const row = data as any;
       return {
         ...row,
-        public_profile: row.public_profile ?? true,
+        public_profile: true,
       } as Profile;
     },
     enabled: !!targetId,
