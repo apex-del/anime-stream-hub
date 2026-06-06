@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,13 @@ interface Comment {
   parent_id: string | null;
 }
 
+interface CommentProfile {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  public_profile: boolean;
+}
+
 interface Reaction {
   id: string;
   comment_id: string;
@@ -51,6 +59,21 @@ type SortMode = "newest" | "oldest" | "top";
 
 export default function AnimeComments({ animeId }: AnimeCommentsProps) {
   const { user } = useAuth();
+  const { data: ownProfile } = useQuery({
+    queryKey: ["comment-own-profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { avatar_url: string | null; display_name: string | null } | null;
+    },
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
@@ -90,6 +113,30 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
     },
     enabled: commentIds.length > 0,
     staleTime: 30 * 1000,
+  });
+
+  const { data: commentProfiles = {} } = useQuery({
+    queryKey: ["comment-profiles", animeId, allComments.map((c) => c.user_id).sort().join(",")],
+    queryFn: async () => {
+      const userIds = Array.from(new Set(allComments.map((c) => c.user_id).filter(Boolean)));
+      if (userIds.length === 0) return {} as Record<string, CommentProfile>;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", userIds);
+      if (error) throw error;
+      return (data ?? []).reduce((acc, row: any) => {
+        acc[row.user_id] = {
+          user_id: row.user_id,
+          display_name: row.display_name,
+          avatar_url: row.avatar_url,
+          public_profile: true,
+        };
+        return acc;
+      }, {} as Record<string, CommentProfile>);
+    },
+    enabled: allComments.length > 0,
+    staleTime: 60 * 1000,
   });
 
   const getReactionCounts = (commentId: string) => {
@@ -226,6 +273,10 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
     const isOwner = user?.id === comment.user_id;
     const edited = comment.updated_at && comment.updated_at !== comment.created_at;
 
+    const profile = commentProfiles[comment.user_id];
+    const avatarName = profile?.display_name || comment.display_name || "Anonymous";
+    const profileHref = profile?.public_profile === false ? null : `/profile/${comment.user_id}`;
+
     return (
       <motion.div
         key={comment.id}
@@ -236,12 +287,21 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold">
-              {(comment.display_name || "U")[0].toUpperCase()}
-            </div>
+            <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 border border-border">
+              <AvatarImage src={profile?.avatar_url ?? undefined} alt={avatarName} />
+              <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
+                {avatarName[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <div className="flex items-center flex-wrap gap-x-2">
-                <span className="text-xs sm:text-sm font-medium truncate">{comment.display_name || "Anonymous"}</span>
+                {profileHref ? (
+                  <Link to={profileHref} className="text-xs sm:text-sm font-medium truncate hover:text-primary transition-colors">
+                    {avatarName}
+                  </Link>
+                ) : (
+                  <span className="text-xs sm:text-sm font-medium truncate">{avatarName}</span>
+                )}
                 <span className="text-[10px] sm:text-xs text-muted-foreground">{timeAgo(comment.created_at)}</span>
                 {edited && <span className="text-[10px] text-muted-foreground italic">(edited)</span>}
               </div>
@@ -426,9 +486,12 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
       {user ? (
         <form onSubmit={handleSubmit} className="mb-6">
           <div className="flex gap-2 sm:gap-3">
-            <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold mt-0.5">
-              {user.email?.[0]?.toUpperCase() || "U"}
-            </div>
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 mt-0.5 border border-border">
+              <AvatarImage src={ownProfile?.avatar_url ?? undefined} alt={ownProfile?.display_name || "Your avatar"} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                {(ownProfile?.display_name?.[0] ?? user.email?.[0] ?? "U").toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 space-y-2 min-w-0">
               <textarea
                 value={content}

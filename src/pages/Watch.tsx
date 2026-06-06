@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, AlertCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Info, Server, Play, ChevronLeft, ChevronRight, Star, Calendar, Film, List, Download, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import AnimeCard from "@/components/AnimeCard";
 import AnimeComments from "@/components/AnimeComments";
@@ -85,13 +85,13 @@ export default function Watch() {
     [streams, audio]
   );
 
-  // Auto-select preferred server: vidara first, then turbovid, then abyss.
+  // Auto-select preferred server: Turbo first, then Vidara, then Abyss.
   useEffect(() => {
     if (filteredStreams.length > 0) {
       if (!filteredStreams.find((s) => s.id === activeServerId)) {
         const preferred =
-          filteredStreams.find((s) => /vidara/i.test(s.service_name)) ||
           filteredStreams.find((s) => /turbo/i.test(s.service_name)) ||
+          filteredStreams.find((s) => /vidara/i.test(s.service_name)) ||
           filteredStreams.find((s) => /abyss/i.test(s.service_name)) ||
           filteredStreams[0];
         setActiveServerId(preferred.id);
@@ -301,18 +301,10 @@ export default function Watch() {
           {activeStream && (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2">
               <p className="text-[11px] sm:text-xs text-muted-foreground">
-                If one player fails, switch server or open it directly.
+                If one player fails, switch server to Vidara, then TurboVid, then Abyss.
               </p>
               <div className="flex items-center gap-1.5">
                 <ReportButton animeId={animeId} animeTitle={getDisplayTitle(anime)} episodeNumber={currentEp} />
-                <a
-                  href={embedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" /> Open
-                </a>
               </div>
             </div>
           )}

@@ -9,7 +9,9 @@ export interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  public_profile: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export function useProfile(userId?: string) {
@@ -22,11 +24,16 @@ export function useProfile(userId?: string) {
       if (!targetId) return null;
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, display_name, avatar_url, bio, created_at, updated_at")
         .eq("user_id", targetId)
         .maybeSingle();
       if (error) throw error;
-      return data as Profile | null;
+      if (!data) return null;
+      const row = data as any;
+      return {
+        ...row,
+        public_profile: true,
+      } as Profile;
     },
     enabled: !!targetId,
   });
@@ -38,11 +45,13 @@ export function useUpdateProfile() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (patch: Partial<Pick<Profile, "display_name" | "avatar_url" | "bio">>) => {
+    mutationFn: async (
+      patch: Partial<Pick<Profile, "display_name" | "avatar_url" | "bio" | "public_profile">>
+    ) => {
       if (!user) throw new Error("Must be signed in");
       const { error } = await supabase
         .from("profiles")
-        .update(patch)
+        .update(patch as any)
         .eq("user_id", user.id);
       if (error) throw error;
     },
@@ -50,7 +59,8 @@ export function useUpdateProfile() {
       qc.invalidateQueries({ queryKey: ["profile"] });
       toast({ title: "Profile updated" });
     },
-    onError: (e: any) => toast({ title: "Update failed", description: e.message, variant: "destructive" }),
+    onError: (e: any) =>
+      toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 }
 
@@ -63,8 +73,11 @@ export function useUserStats(userId?: string) {
       if (!targetId) return { favorites: 0, watched: 0, comments: 0 };
       const [fav, watched, com] = await Promise.all([
         supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", targetId),
-        supabase.from("anime_status" as any).select("id", { count: "exact", head: true })
-          .eq("user_id", targetId).eq("status", "watched"),
+        supabase
+          .from("anime_status" as any)
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", targetId)
+          .eq("status", "watched"),
         supabase.from("comments").select("id", { count: "exact", head: true }).eq("user_id", targetId),
       ]);
       return {
