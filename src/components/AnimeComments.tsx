@@ -100,6 +100,30 @@ export default function AnimeComments({ animeId }: AnimeCommentsProps) {
     staleTime: 30 * 1000,
   });
 
+  const { data: commentProfiles = {} } = useQuery({
+    queryKey: ["comment-profiles", animeId, allComments.map((c) => c.user_id).sort().join(",")],
+    queryFn: async () => {
+      const userIds = Array.from(new Set(allComments.map((c) => c.user_id).filter(Boolean)));
+      if (userIds.length === 0) return {} as Record<string, CommentProfile>;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, public_profile")
+        .in("user_id", userIds);
+      if (error) throw error;
+      return (data ?? []).reduce((acc, row: any) => {
+        acc[row.user_id] = {
+          user_id: row.user_id,
+          display_name: row.display_name,
+          avatar_url: row.avatar_url,
+          public_profile: row.public_profile ?? true,
+        };
+        return acc;
+      }, {} as Record<string, CommentProfile>);
+    },
+    enabled: allComments.length > 0,
+    staleTime: 60 * 1000,
+  });
+
   const getReactionCounts = (commentId: string) => {
     const r = reactions.filter((x) => x.comment_id === commentId);
     return {
